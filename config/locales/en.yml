@@ -1,0 +1,20 @@
+en:
+  date:
+    formats:
+      weekday: "%A"
+      medium: "%b %-d, %Y"
+      short: "%b %-d"
+      short_month: "%b"
+      medium_month: "%b %Y"
+      date_at_time: "%b %-d at %l:%M%P"
+    days:
+      today_lower: "today"
+  time:
+    formats:
+      tiny: "%l:%M%P"
+      tiny_on_the_hour: "%l%P"
+  support:
+    array:
+      or:
+        two_words_connector: ' or '
+        last_word_connector: ', or '

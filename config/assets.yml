@@ -1,0 +1,169 @@
+embed_assets: off
+gzip_assets: off
+css_compressor_options:
+  line_break: 0
+
+# if you want use IE in dev mode and want to get around the max of 30 stylesheets
+# problem, uncomment the following lines and make sure you
+# rm -rf public/assets after you make any changes to css
+# package_assets: always
+# compress_assets: off
+
+<% require File.expand_path(Jammit::ASSET_ROOT + '/lib/canvas/plugins/plugin_assets') %>
+<% plugin_assets = PluginAssets.new %>
+<%= plugin_assets.bundle_yml %>
+
+javascripts:
+
+stylesheets:
+  common:
+    - public/stylesheets/compiled/g_reset.css
+    - public/stylesheets/compiled/g_base.css
+    - public/stylesheets/compiled/g_instructure.css
+    - public/stylesheets/compiled/ellipsis.css
+    - public/stylesheets/compiled/g_util_misc.css
+    - public/stylesheets/compiled/g_util_fancy_links.css
+    - public/stylesheets/compiled/g_util_inst_tree.css
+    - public/stylesheets/compiled/g_util_chevron_crumbs.css
+    - public/stylesheets/compiled/g_util_ui_listview.css
+    - public/stylesheets/compiled/g_assignments.css
+    - public/stylesheets/compiled/g_content_imports.css
+    - public/stylesheets/compiled/g_context_inbox.css
+    - public/stylesheets/compiled/g_groups.css
+    - public/stylesheets/compiled/g_media_comments.css
+    - public/stylesheets/compiled/g_context_modules.css
+    - public/stylesheets/compiled/g_collaborations.css
+    - public/stylesheets/compiled/g_files.css
+    - public/stylesheets/compiled/g_wiki.css
+    - public/stylesheets/compiled/g_conference.css
+    - public/stylesheets/compiled/g_rubrics.css
+    - public/stylesheets/compiled/g_wiki_sidebar.css
+    - public/stylesheets/compiled/g_syllabus.css
+    - public/stylesheets/compiled/g_mini_calendar.css
+    - public/stylesheets/compiled/helpDialog.css
+    - public/stylesheets/compiled/print.css
+  collection_item_save:
+    - public/stylesheets/compiled/collection_item_save.css
+  collections_app:
+    - public/stylesheets/compiled/views/KollectionItems/ShowView.css
+    - public/stylesheets/compiled/views/CommentsView.css
+  dashboard:
+    - public/stylesheets/compiled/dashboard_messages.css
+    - public/stylesheets/compiled/dashboard_activity.css
+  registration:
+    - public/stylesheets/compiled/registration.css
+  profile_show:
+    - public/stylesheets/compiled/profile/show.css
+  profile_edit:
+    - public/stylesheets/compiled/profile/edit.css
+  group_settings:
+    - public/stylesheets/compiled/groups/edit.css
+  facebook:
+    - public/stylesheets/compiled/facebook.css
+  speed_grader:
+    - public/stylesheets/compiled/ui.selectmenu.css
+    - public/stylesheets/compiled/speed_grader.css
+  plugins:
+    - public/stylesheets/compiled/plugins.css
+  gradebook_uploads:
+    - public/stylesheets/static/slick.grid.css
+    - public/stylesheets/compiled/gradebook_uploads.css
+  calendar:
+    - public/stylesheets/static/calendar.css
+  calendar2:
+    - public/stylesheets/compiled/fullcalendar.css
+    - public/stylesheets/compiled/Calendar.css
+    - public/stylesheets/compiled/mini_calendar.css
+    - public/stylesheets/compiled/calendar/sidebar.css
+    - public/stylesheets/compiled/calendar/scheduler.css
+  course_settings:
+    - public/stylesheets/compiled/course_settings.css
+    - public/stylesheets/compiled/external_tools.css
+    - public/stylesheets/compiled/grading_standards.css
+  discussions:
+    - public/stylesheets/compiled/ui.selectmenu.css
+    - public/stylesheets/compiled/discussions.css
+  full_files:
+    - public/stylesheets/compiled/full_files.css
+  datagrid:
+    - public/stylesheets/compiled/datagrid.css
+  gradebook_history:
+    - public/stylesheets/compiled/gradebook_history.css
+  gradebooks:
+    - public/stylesheets/compiled/gradebooks.css
+    - public/stylesheets/compiled/message_students.css
+  gradebook2:
+    - public/stylesheets/compiled/message_students.css
+    - public/stylesheets/compiled/submissionDetailsDialog.css
+    - public/stylesheets/compiled/AssignmentDetailsDialog.css
+    - public/stylesheets/compiled/gradebook2.css
+    - public/stylesheets/compiled/assignment_group_weights_dialog.css
+  attendance:
+    - public/stylesheets/compiled/attendance.css
+  quizzes:
+    - public/stylesheets/compiled/quizzes.css
+    - public/stylesheets/compiled/message_students.css
+    - public/stylesheets/compiled/ui.selectmenu.css
+  moderate_quiz:
+    - public/stylesheets/compiled/moderate_quiz.css
+  full_assignment:
+    - public/stylesheets/compiled/full_assignment.css
+    - public/stylesheets/compiled/grading_standards.css
+    - public/stylesheets/static/embed_content.css
+  grading_standards:
+    - public/stylesheets/compiled/grading_standards.css
+  login:
+    - public/stylesheets/compiled/login.css
+  roster:
+    - public/stylesheets/compiled/course_settings.css
+    - public/stylesheets/compiled/roster.css
+  roster_user:
+    - public/stylesheets/compiled/roster_user.css
+  learning_outcomes:
+    - public/stylesheets/compiled/learning_outcomes.css
+  grade_summary:
+    - public/stylesheets/compiled/grade_summary.css
+  context_list:
+    - public/stylesheets/compiled/context_list.css
+  page_views:
+    - public/stylesheets/compiled/page_views.css
+  prior_users:
+    - public/stylesheets/compiled/prior_users.css
+  popup:
+    - public/stylesheets/compiled/g_reset.css
+    - public/stylesheets/compiled/popup/main.css
+  reports:
+    - public/stylesheets/compiled/reports.css
+  statistics:
+    - public/stylesheets/compiled/statistics.css
+  slickgrid:
+    - public/javascripts/vendor/slickgrid/slick.grid.css
+  sub_accounts:
+    - public/stylesheets/compiled/sub_accounts.css
+  user_grades:
+    - public/stylesheets/compiled/user_grades.css
+  user_logins:
+    - public/stylesheets/compiled/user_logins.css
+  account_settings:
+    - public/stylesheets/compiled/account_settings.css
+    - public/stylesheets/compiled/external_tools.css
+  select_content_dialog:
+    - public/stylesheets/compiled/select_content_dialog.css
+  conversations:
+    - public/stylesheets/compiled/conversations.css
+    - public/stylesheets/compiled/slideshow.css
+  alerts:
+    - public/stylesheets/compiled/alerts.css
+  developer_keys:
+    - public/stylesheets/compiled/developer_keys.css
+  edit_calendar_event_full:
+    - public/stylesheets/compiled/calendar/editCalendarEventFull.css
+  notification_preferences:
+    - public/stylesheets/compiled/notification_preferences.css
+  tinymce:
+    - public/javascripts/tinymce/jscripts/tiny_mce/themes/advanced/skins/default/ui.css
+    - public/stylesheets/compiled/tiny_like_ck_with_external_tools.css
+    - public/javascripts/tinymce/jscripts/tiny_mce/plugins/inlinepopups/skins/clearlooks2/window.css
+  messages:
+    - public/stylesheets/compiled/messages.css
+  <%= plugin_assets.anchors_yml %>
