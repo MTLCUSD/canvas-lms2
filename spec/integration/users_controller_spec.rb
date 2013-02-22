@@ -38,7 +38,7 @@ describe UsersController do
       get user_student_teacher_activity_url(@teacher, @e1.user)
       Nokogiri::HTML(response.body).at_css('table.report tr:first td:nth(2)').text.should match(/never/)
 
-      @conversation = Conversation.initiate([@e1.user_id, @teacher.id], false)
+      @conversation = Conversation.initiate([@e1.user, @teacher], false)
       @conversation.add_message(@teacher, "hello")
 
       get user_student_teacher_activity_url(@teacher, @e1.user)
@@ -253,21 +253,15 @@ describe UsersController do
       response.should be_success
       assigns['pending_other_user'].should == @admin
       assigns['other_user'].should be_nil
-      session[:pending_user_id].should be_nil
-      session[:merge_user_id].should be_nil
 
       get user_admin_merge_url(@user, :new_user_id => @admin.id)
       response.should be_success
       assigns['pending_other_user'].should be_nil
       assigns['other_user'].should == @admin
-      session[:pending_user_id].should be_nil
-      session[:merge_user_id].should == @user.id
 
       post user_merge_url(@user, :new_user_id => @admin.id)
       response.should redirect_to(user_profile_url(@admin))
 
-      session[:pending_user_id].should be_nil
-      session[:merge_user_id].should be_nil
       @user.reload.should be_deleted
       @admin.reload.should be_registered
       @admin.pseudonyms.count.should == 2

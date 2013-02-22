@@ -48,11 +48,18 @@ describe "Roles API", :type => :integration do
         parameters)
     end
 
-    it "should add the role to the account" do
-      @account.available_account_roles.should_not include(@role)
-      json = api_call_with_settings(:explicit => '1', :enabled => '1')
-      @account.reload
-      @account.available_account_roles.should include(@role)
+    describe "add_role" do 
+      it "includes base_role_type_label" do 
+        json = api_call_with_settings(:base_role_type => "StudentEnrollment")
+        json.should include("base_role_type_label" => "Student")
+      end
+
+      it "adds the role to the account" do
+        @account.available_account_roles.should_not include(@role)
+        json = api_call_with_settings(:explicit => '1', :enabled => '1')
+        @account.reload
+        @account.available_account_roles.should include(@role)
+      end
     end
 
     describe "index" do
@@ -394,7 +401,7 @@ describe "Roles API", :type => :integration do
     describe "json response" do
       it "should return the expected json format" do
         json = api_call_with_settings
-        json.keys.sort.should == ["account", "base_role_type", "permissions", "role", "workflow_state"]
+        json.keys.sort.should == ["account", "base_role_type", "label", "permissions", "role", "workflow_state"]
         json["account"].should == {
           "name" => @account.name,
           "root_account_id" => @account.root_account_id,
@@ -487,6 +494,13 @@ describe "Roles API", :type => :integration do
       end
 
       it "should not be able to edit read-only permissions" do
+        sub = @account.sub_accounts.create!
+        @path = "/api/v1/accounts/#{sub.id}/roles/TeacherEnrollment"
+        @path_options[:account_id] = sub.id.to_param
+        o = @account.role_overrides.create(:permission => 'read_forum', :enrollment_type => 'TeacherEnrollment', :enabled => true)
+        o.locked = true
+        o.save!
+
         json = api_call(:put, @path, @path_options, { :permission => {
           :read_forum => { :explicit => 1, :enabled => 0 }}})
 

@@ -198,6 +198,12 @@ $cell_height: 33px
 .slick-cell.completely-hidden
   display: none
 
+.gradebook-tooltip-last
+  left: auto
+  right: 0
+  &:after
+    left: auto
+    right: 15px
 
 .gradebook-cell
   padding-top: 8px
@@ -211,10 +217,12 @@ $cell_height: 33px
 
   &.late
     background-image: url("/images/gradebook-late-indicator.png")
-  &.dropped
-    background-image: url("/images/gradebook-dropped-indicator.png")
   &.resubmitted
     background-image: url("/images/gradebook-resubmitted-indicator.png")
+
+.slick-cell.dropped
+  background-image: url("/images/gradebook-dropped-indicator.png")
+  background-repeat: repeat
 
 .gradebook-cell-turnitin
   position: absolute
@@ -401,3 +409,6 @@ $gradebook_checkbox_width: 16px
   font-size: 11px
   padding-left: 8px
   line-height: 19px
+
+.final-warning
+  margin-left: -16px

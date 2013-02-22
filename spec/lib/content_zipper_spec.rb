@@ -35,7 +35,7 @@ describe ContentZipper do
       Zip::ZipFile.foreach(attachment.full_filename) do |f|
         if f.file?
           f.name.should =~ /some-999-_-1234-guy/
-          f.get_input_stream.read.should match(%r{This submission was a url, we're taking you to the url link now.})
+          f.get_input_stream.read.should match(%r{This submission was a url, we&#39;re taking you to the url link now.})
           f.get_input_stream.read.should be_include("http://www.instructure.com/")
         end
       end
@@ -74,6 +74,22 @@ describe ContentZipper do
       attachment.reload
       # no submissions
       attachment.workflow_state.should == 'errored'
+    end
+  end
+
+  describe "assignment_zip_filename" do
+    it "should use use course and title slugs to keep filename length down" do
+      course(:active_all => true)
+      @course.short_name = "a" * 31
+      @course.save!
+      assignment_model(:course => @course, :title => "b" * 31)
+
+      zipper = ContentZipper.new
+      filename = zipper.assignment_zip_filename(@assignment)
+      filename.should match /#{@course.short_name_slug}/
+      filename.should match /#{@assignment.title_slug}/
+      filename.should_not match /#{@course.short_name}/
+      filename.should_not match /#{@assignment.title}/
     end
   end
 

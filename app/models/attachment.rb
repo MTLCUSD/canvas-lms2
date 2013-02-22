@@ -903,7 +903,13 @@ class Attachment < ActiveRecord::Base
         # now generate the notification
         record = Attachment.find(attachment_id)
         notification = Notification.by_name(count.to_i > 1 ? 'New Files Added' : 'New File Added')
-        to_list = record.context.participants - [record.user]
+
+        if record.context.is_a?(Course) && (record.folder.locked? || record.context.tab_hidden?(Course::TAB_FILES))
+          # only notify course students if they are able to access it
+          to_list = record.context.participating_admins - [record.user]
+        else
+          to_list = record.context.participants - [record.user]
+        end
         recipient_keys = (to_list || []).compact.map(&:asset_string)
         asset_context = record.context
         data = { :count => count }
@@ -1233,6 +1239,10 @@ class Attachment < ActiveRecord::Base
   named_scope :active, lambda {
     { :conditions => ['attachments.file_state != ?', 'deleted'] }
   }
+
+  named_scope :not_hidden, :conditions => ['attachments.file_state != ?', 'hidden']
+  named_scope :not_locked, lambda {{:conditions => ['(attachments.locked IS NULL OR attachments.locked = ?) AND ((attachments.lock_at IS NULL) OR
+    (attachments.lock_at > ? OR (attachments.unlock_at IS NOT NULL AND attachments.unlock_at < ?)))', false, Time.now, Time.now]}}
 
   alias_method :destroy!, :destroy
   # file_state is like workflow_state, which was already taken

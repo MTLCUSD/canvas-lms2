@@ -30,19 +30,25 @@ describe SelfEnrollmentsController do
       response.should be_success
     end
 
+    it "should do the delegated auth dance" do
+      account = account_with_cas({:account => Account.default})
+      
+      get 'new', :self_enrollment_code => @course.self_enrollment_code
+      response.should redirect_to login_url
+    end
+
     it "should not render for an incorrect code" do
       lambda {
         get 'new', :self_enrollment_code => 'abc'
       }.should raise_exception(ActiveRecord::RecordNotFound)
     end
 
-    it "should not render if self_enrollment is disabled" do
+    it "should render even if self_enrollment is disabled" do
       code = @course.self_enrollment_code
       @course.update_attribute(:self_enrollment, false)
 
-      lambda {
-        get 'new', :self_enrollment_code => code
-      }.should raise_exception(ActiveRecord::RecordNotFound)
+      get 'new', :self_enrollment_code => code
+      response.should be_success
     end
   end
 
@@ -87,9 +93,8 @@ describe SelfEnrollmentsController do
       user
       user_session(@user)
 
-      lambda {
-        post 'create', :self_enrollment_code => code
-      }.should raise_exception(ActiveRecord::RecordNotFound)
+      post 'create', :self_enrollment_code => code
+      response.status.should =~ /400 Bad Request/
       @user.enrollments.length.should == 0
     end
 

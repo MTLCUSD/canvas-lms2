@@ -12,6 +12,16 @@
         <label for="lock">{{#t "lock_for_comments"}}Lock for comments{{/t}}</label>
         <button id="delete">{{#t "delete"}}Delete{{/t}}</button>
       </span>
+
+      {{#if options.permissions.change_settings}}
+      <button
+        id="edit_discussions_settings"
+        class="btn"
+        data-tooltip
+        title='{{#t "edit_settings"}}Edit Discussions Settings{{/t}}'
+      ><i class="icon-settings"></i></button>
+      {{/if}}
+
       {{#if options.permissions.create}}
         <a href="{{new_topic_url}}" class="btn btn-primary" id="new-discussion-btn">{{#if showingAnnouncements}}
           <i class="icon-announcement"></i> 
@@ -67,7 +77,7 @@
   </div>
   <div class="discussionTopicIndexList"></div>
 {{else}}
-  {{#if atLeastOnePageFetched}}
+  {{#if lastPageFetched}}
     <div style="margin:auto; text-align: center; margin-top: 80px">
       <h1>
         {{#if showingAnnouncements}}

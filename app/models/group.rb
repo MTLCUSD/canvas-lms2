@@ -48,6 +48,7 @@ class Group < ActiveRecord::Base
   has_many :active_folders, :class_name => 'Folder', :as => :context, :conditions => ['folders.workflow_state != ?', 'deleted'], :order => 'folders.name'
   has_many :active_folders_with_sub_folders, :class_name => 'Folder', :as => :context, :include => [:active_sub_folders], :conditions => ['folders.workflow_state != ?', 'deleted'], :order => 'folders.name'
   has_many :active_folders_detailed, :class_name => 'Folder', :as => :context, :include => [:active_sub_folders, :active_file_attachments], :conditions => ['folders.workflow_state != ?', 'deleted'], :order => 'folders.name'
+  has_many :collaborators
   has_many :external_feeds, :as => :context, :dependent => :destroy
   has_many :messages, :as => :context, :dependent => :destroy
   belongs_to :wiki
@@ -318,6 +319,7 @@ class Group < ActiveRecord::Base
     can :read and 
     can :read_roster and
     can :send_messages and
+    can :send_messages_all and
     can :follow
 
     # if I am a member of this group and I can moderate_forum in the group's context
@@ -526,5 +528,23 @@ class Group < ActiveRecord::Base
 
   def associated_shards
     [Shard.default]
+  end
+
+  class Bookmarker
+    def self.bookmark_for(group)
+      group.id
+    end
+
+    def self.validate(bookmark)
+      bookmark.is_a?(Fixnum)
+    end
+
+    def self.restrict_scope(scope, pager)
+      if bookmark = pager.current_bookmark
+        comparison = (pager.include_bookmark ? 'groups.id >= ?' : 'groups.id > ?')
+        scope = scope.scoped(:conditions => [comparison, bookmark])
+      end
+      scope.scoped(:order => "groups.id ASC")
+    end
   end
 end

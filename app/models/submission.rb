@@ -160,6 +160,10 @@ class Submission < ActiveRecord::Base
       self.assignment.context.observer_enrollments.find_by_user_id_and_associated_user_id_and_workflow_state(user.id, self.user.id, 'active') }
     can :read and can :read_comments
 
+    given {|user| self.assignment && !self.assignment.muted? && self.assignment.context && user && self.user &&
+      self.assignment.context.observer_enrollments.find_by_user_id_and_associated_user_id_and_workflow_state(user.id, self.user.id, 'active').try(:grants_right?, user, :read_grades) }
+    can :read_grade
+
     given {|user, session| self.assignment.cached_context_grants_right?(user, session, :manage_grades) }#admins.include?(user) }
     can :read and can :comment and can :make_group_comment and can :read_grade and can :grade
 
@@ -473,6 +477,7 @@ class Submission < ActiveRecord::Base
       self.attempt ||= 0
       self.attempt += 1 if self.submitted_at_changed?
       self.attempt = 1 if self.attempt < 1
+      compute_lateness if late.nil? || self.submitted_at_changed?
     end
     if self.submission_type == 'media_recording' && !self.media_comment_id
       raise "Can't create media submission without media object"
@@ -505,7 +510,7 @@ class Submission < ActiveRecord::Base
 
   def update_admins_if_just_submitted
     if @just_submitted
-      context.send_later_if_production(:resubmission_for, "assignment_#{assignment_id}")
+      context.send_later_if_production(:resubmission_for, assignment)
     end
     true
   end
@@ -564,10 +569,6 @@ class Submission < ActiveRecord::Base
     self.updated_at <=> other.updated_at
   end
 
-  def submitted_late?
-    self.assignment.overridden_for(self.user).due_at <= Time.now.localtime
-  end
-  
   # Submission:
   #   Online submission submitted AFTER the due date (notify the teacher) - "Grade Changes"
   #   Submission graded (or published) - "Grade Changes"
@@ -582,7 +583,7 @@ class Submission < ActiveRecord::Base
       ((record.just_created && record.submitted?) || record.changed_state_to(:submitted) || record.prior_version.try(:submitted_at) != record.submitted_at) and
       record.state == :submitted and
       record.has_submission? and 
-      record.submitted_late?
+      record.late?
     }
 
     p.dispatch :assignment_submitted
@@ -594,7 +595,7 @@ class Submission < ActiveRecord::Base
       record.state == :submitted and
       record.has_submission? and
       # don't send a submitted message because we already sent an :assignment_submitted_late message
-      !record.submitted_late?
+      !record.late?
     }
 
     p.dispatch :assignment_resubmitted
@@ -607,7 +608,7 @@ class Submission < ActiveRecord::Base
       record.prior_version.submitted_at != record.submitted_at and
       record.has_submission? and
       # don't send a resubmitted message because we already sent a :assignment_submitted_late message.
-      !record.submitted_late?
+      !record.late?
     }
 
     p.dispatch :group_assignment_submitted_late
@@ -618,7 +619,7 @@ class Submission < ActiveRecord::Base
       record.assignment.context.state == :available and 
       ((record.just_created && record.submitted?) || record.changed_state_to(:submitted) || record.prior_version.try(:submitted_at) != record.submitted_at) and
       record.state == :submitted and
-      record.submitted_late?
+      record.late?
     }
 
     p.dispatch :submission_graded
@@ -858,14 +859,14 @@ class Submission < ActiveRecord::Base
   end
 
   def conversation_groups
-    participating_instructors.map{ |i| [user_id, i.id] }
+    participating_instructors.map{ |i| [user, i] }
   end
 
   def conversation_message_data
     latest = visible_submission_comments.scoped(:conditions => ["author_id IN (?)", possible_participants_ids]).last or return
     {
       :created_at => latest.created_at,
-      :author_id => latest.author_id,
+      :author => latest.author,
       :body => latest.comment
     }
   end
@@ -899,7 +900,7 @@ class Submission < ActiveRecord::Base
   #                        updating the conversation.
   #
   # ==== Overrides
-  # * <tt>:skip_ids</tt> - Gets passed through to <tt>Conversation</tt>.<tt>update_all_for_asset</tt>.
+  # * <tt>:skip_users</tt> - Gets passed through to <tt>Conversation</tt>.<tt>update_all_for_asset</tt>.
   #                        nil by default, which means mark-as-unread for
   #                        everyone but the author.
   def create_or_update_conversations!(trigger, overrides={})
@@ -908,10 +909,10 @@ class Submission < ActiveRecord::Base
     when :create
       options[:update_participants] = true
       options[:update_for_skips] = false
-      options[:skip_ids] = overrides[:skip_ids] || [conversation_message_data[:author_id]] # don't mark-as-unread for the author
+      options[:skip_users] = overrides[:skip_users] || [conversation_message_data[:author]] # don't mark-as-unread for the author
       participating_instructors.each do |t|
-        # Check their settings and add to :skip_ids if set to suppress.
-        options[:skip_ids] << t.id if t.preferences[:no_submission_comments_inbox] == true
+        # Check their settings and add to :skip_users if set to suppress.
+        options[:skip_users] << t if t.preferences[:no_submission_comments_inbox] == true
       end
     when :destroy
       options[:delete_all] = visible_submission_comments.empty?
@@ -1003,11 +1004,18 @@ class Submission < ActiveRecord::Base
     @group_broadcast_submission = false
   end
 
-  def late?
-    a = AssignmentOverrideApplicator.assignment_overridden_for(assignment, user)
-    submitted_at && a.due_at ? (submitted_at - 1.minute) > a.due_at : false
+  def compute_lateness
+    overridden_assignment = assignment.overridden_for(self.user)
+
+    check_time = submitted_at
+    check_time -= 60.seconds if submission_type == 'online_quiz'
+
+    late = submitted_at &&
+      overridden_assignment.due_at &&
+      overridden_assignment.due_at < check_time
+
+    write_attribute :late, !!late
   end
-  alias_method :late, :late?
 
   def graded?
     !!self.score && self.workflow_state == 'graded'

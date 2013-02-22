@@ -19,7 +19,8 @@
 require File.expand_path(File.dirname(__FILE__) + '/../api_spec_helper')
 
 describe UsersController, :type => :integration do
-
+  include Api
+  include Api::V1::Assignment
 
   before do
     course_with_student(:active_all => true)
@@ -219,7 +220,7 @@ describe UsersController, :type => :integration do
 
   it "should format Conversation" do
     @sender = User.create!(:name => 'sender')
-    @conversation = Conversation.initiate([@user.id, @sender.id], false)
+    @conversation = Conversation.initiate([@user, @sender], false)
     @conversation.add_message(@sender, "hello")
     @message = @conversation.conversation_messages.last
     json = api_call(:get, "/api/v1/users/activity_stream.json",
@@ -270,7 +271,9 @@ describe UsersController, :type => :integration do
     @sub.save!
     json = api_call(:get, "/api/v1/users/activity_stream.json",
                     { :controller => "users", :action => "activity_stream", :format => 'json' })
-
+    @assignment.reload
+    assign_json = assignment_json(@assignment,@user,session,false)
+    assign_json['title'] = @assignment.title
     json.should == [{
       'id' => StreamItem.last.id,
       'title' => "assignment 1",
@@ -283,24 +286,8 @@ describe UsersController, :type => :integration do
       'score' => 12,
       'html_url' => "http://www.example.com/courses/#{@course.id}/assignments/#{@assignment.id}/submissions/#{@user.id}",
       'workflow_state' => 'graded',
-
-      'assignment' => {
-        'title' => 'assignment 1',
-        'id' => @assignment.id,
-        'points_possible' => 14.2,
-        'assignment_group_id' => @assignment.assignment_group.id,
-        'course_id' => @course.id,
-        'description' => @assignment.description,
-        'due_at' => @assignment.due_at,
-        'grading_type' => @assignment.grading_type,
-        'group_category_id' => nil,
-        'html_url' => "http://www.example.com/courses/#{@course.id}/assignments/#{@assignment.id}",
-        'muted' => @assignment.muted,
-        'name' => @assignment.title,
-        'position' => @assignment.position,
-        'submission_types' => ['online_text_entry']
-      },
-
+      'late' => nil,
+      'assignment' => assign_json,
       'assignment_id' => @assignment.id,
       'attempt' => nil,
       'body' => nil,
@@ -314,6 +301,12 @@ describe UsersController, :type => :integration do
       'submission_comments' => [{
         'body' => 'c1',
         'comment' => 'c1',
+        'author' => {
+          'id' => @teacher.id,
+          'display_name' => 'teacher',
+          'html_url' => "http://www.example.com/courses/#{@course.id}/users/#{@teacher.id}",
+          'avatar_image_url' => 'http://www.example.com/images/messages/avatar-50.png'
+        },
         'author_name' => 'teacher',
         'author_id' => @teacher.id,
         'created_at' => @sub.submission_comments[0].created_at.as_json,
@@ -321,6 +314,12 @@ describe UsersController, :type => :integration do
       {
         'body' => 'c2',
         'comment' => 'c2',
+        'author' => {
+          'id' => @user.id,
+          'display_name' => 'User',
+          'html_url' => "http://www.example.com/courses/#{@course.id}/users/#{@user.id}",
+          'avatar_image_url' => 'http://www.example.com/images/messages/avatar-50.png'
+        },
         'author_name' => 'User',
         'author_id' => @user.id,
         'created_at' => @sub.submission_comments[1].created_at.as_json,
@@ -359,6 +358,9 @@ describe UsersController, :type => :integration do
     @sub.save!
     json = api_call(:get, "/api/v1/users/activity_stream.json",
                     { :controller => "users", :action => "activity_stream", :format => 'json' })
+    @assignment.reload
+    assign_json = assignment_json(@assignment,@user,session,false)
+    assign_json['title'] = @assignment.title
     json.should == [{
       'id' => StreamItem.last.id,
       'title' => "assignment 1",
@@ -371,24 +373,9 @@ describe UsersController, :type => :integration do
       'score' => nil,
       'html_url' => "http://www.example.com/courses/#{@course.id}/assignments/#{@assignment.id}/submissions/#{@user.id}",
       'workflow_state' => 'unsubmitted',
+      'late' => nil,
 
-      'assignment' => {
-        'title' => 'assignment 1',
-        'id' => @assignment.id,
-        'points_possible' => 14.2,
-        'assignment_group_id' => @assignment.assignment_group.id,
-        'course_id' => @course.id,
-        'description' => @assignment.description,
-        'due_at' => @assignment.due_at,
-        'grading_type' => @assignment.grading_type,
-        'group_category_id' => nil,
-        'html_url' => "http://www.example.com/courses/#{@course.id}/assignments/#{@assignment.id}",
-        'muted' => @assignment.muted,
-        'name' => @assignment.title,
-        'position' => @assignment.position,
-        'submission_types' => ['online_text_entry']
-      },
-
+      'assignment' => assign_json,
       'assignment_id' => @assignment.id,
       'attempt' => nil,
       'body' => nil,
@@ -402,6 +389,12 @@ describe UsersController, :type => :integration do
       'submission_comments' => [{
         'body' => 'c1',
         'comment' => 'c1',
+        'author' => {
+          'id' => @teacher.id,
+          'display_name' => 'teacher',
+          'html_url' => "http://www.example.com/courses/#{@course.id}/users/#{@teacher.id}",
+          'avatar_image_url' => 'http://www.example.com/images/messages/avatar-50.png'
+        },
         'author_name' => 'teacher',
         'author_id' => @teacher.id,
         'created_at' => @sub.submission_comments[0].created_at.as_json,
@@ -409,6 +402,12 @@ describe UsersController, :type => :integration do
       {
         'body' => 'c2',
         'comment' => 'c2',
+        'author' => {
+          'id' => @user.id,
+          'display_name' => 'User',
+          'html_url' => "http://www.example.com/courses/#{@course.id}/users/#{@user.id}",
+          'avatar_image_url' => 'http://www.example.com/images/messages/avatar-50.png'
+        },
         'author_name' => 'User',
         'author_id' => @user.id,
         'created_at' => @sub.submission_comments[1].created_at.as_json,

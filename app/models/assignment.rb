@@ -34,7 +34,8 @@ class Assignment < ActiveRecord::Base
     :peer_reviews, :automatic_peer_reviews, :grade_group_students_individually,
     :notify_of_update, :time_zone_edited, :turnitin_enabled, :turnitin_settings,
     :set_custom_field_values, :context, :position, :allowed_extensions,
-    :external_tool_tag_attributes, :freeze_on_copy
+    :external_tool_tag_attributes, :freeze_on_copy, :assignment_group_id
+    
   attr_accessor :original_id, :updating_user, :copying
 
   has_many :submissions, :class_name => 'Submission', :dependent => :destroy
@@ -46,6 +47,7 @@ class Assignment < ActiveRecord::Base
   has_one :rubric_association, :as => :association, :conditions => ['rubric_associations.purpose = ?', "grading"], :order => :created_at, :include => :rubric
   has_one :rubric, :through => :rubric_association
   has_one :teacher_enrollment, :class_name => 'TeacherEnrollment', :foreign_key => 'course_id', :primary_key => 'context_id', :include => :user, :conditions => ["enrollments.workflow_state = 'active' AND enrollments.type = 'TeacherEnrollment'"]
+  has_many :ignores, :as => :asset
   belongs_to :context, :polymorphic => true
   belongs_to :cloned_item
   belongs_to :grading_standard
@@ -69,6 +71,37 @@ class Assignment < ActiveRecord::Base
     end
   end
 
+  API_NEEDED_FIELDS = %w(
+    id
+    title
+    context_id
+    context_type
+    position
+    points_possible
+    grading_type
+    due_at
+    description
+    lock_at
+    unlock_at
+    assignment_group_id
+    peer_reviews
+    automatic_peer_reviews
+    peer_reviews_due_at
+    peer_review_count
+    submission_types
+    group_category_id
+    grade_group_students_individually
+    turnitin_enabled
+    turnitin_settings
+    allowed_extensions
+    muted
+    needs_grading_count
+    could_be_locked
+    freeze_on_copy
+    copied
+    all_day
+    all_day_date
+  )
   # create a shim for plugins that use the old association name. this is
   # TEMPORARY. the plugins should update to use the new association name, and
   # once they're updated, this shim removed. DO NOT USE in new code.
@@ -95,6 +128,10 @@ class Assignment < ActiveRecord::Base
 
   def root_account
     context && context.root_account
+  end
+
+  def name
+    self.title
   end
 
   def name=(val)
@@ -134,7 +171,8 @@ class Assignment < ActiveRecord::Base
                 :clear_unannounced_grading_changes_if_just_unpublished,
                 :schedule_do_auto_peer_review_job_if_automatic_peer_review,
                 :delete_empty_abandoned_children,
-                :validate_assignment_overrides
+                :validate_assignment_overrides,
+                :recompute_submission_lateness_later
 
   has_a_broadcast_policy
 
@@ -146,15 +184,6 @@ class Assignment < ActiveRecord::Base
       # 'deleted') so that the override gets versioned properly
       active_assignment_overrides.scoped(:conditions => {:set_type => 'Group'}).each(&:destroy)
     end
-  end
-
-  def self.due_date_compare_value(date)
-    # due dates are considered equal if they're the same up to the minute
-    date.to_i / 60
-  end
-
-  def self.due_dates_equal?(date1, date2)
-    due_date_compare_value(date1) == due_date_compare_value(date2)
   end
 
   def schedule_do_auto_peer_review_job_if_automatic_peer_review
@@ -306,10 +335,6 @@ class Assignment < ActiveRecord::Base
     end
   end
 
-  def turnitin_enabled?
-    self.turnitin_enabled
-  end
-
   attr_accessor :updated_submissions
   def update_submissions_later
     if @old_assignment_group_id != self.assignment_group_id
@@ -377,6 +402,23 @@ class Assignment < ActiveRecord::Base
     end
     tags_to_update.each { |tag| tag.context_module_action(user, action, points) }
   end
+
+  def context_module_tag_info(user)
+    tag_info = {:points_possible => self.points_possible}
+
+    if self.multiple_due_dates_apply_to?(user)
+      as_student, as_instructor = self.due_dates_for(user)
+      tag_info[:due_dates] = as_instructor.map{|hash| {
+          :title => hash[:title],
+          :due_date => (hash[:due_at].utc.iso8601 rescue nil)}
+      }
+    else
+      tag_info[:due_date] = self.overridden_for(user).due_at.utc.iso8601 rescue nil
+    end
+
+    tag_info
+  end
+
 
   # call this to perform notifications on an Assignment that is not being saved
   # (useful when a batch of overrides associated with a new assignment have been saved)
@@ -783,17 +825,11 @@ class Assignment < ActiveRecord::Base
     }
     can :submit and can :attach_submission_comment_files
 
-    given { |user, session| !self.locked_for?(user) &&
-      (self.context.allow_student_assignment_edits rescue false) &&
-      self.cached_context_grants_right?(user, session, :participate_as_student)
-    }
-    can :update_content
-
     given { |user, session| self.cached_context_grants_right?(user, session, :manage_grades) }
-    can :update and can :update_content and can :grade and can :delete and can :create and can :read and can :attach_submission_comment_files
+    can :update and can :grade and can :delete and can :create and can :read and can :attach_submission_comment_files
 
     given { |user, session| self.cached_context_grants_right?(user, session, :manage_assignments) }
-    can :update and can :update_content and can :delete and can :create and can :read and can :attach_submission_comment_files
+    can :update and can :delete and can :create and can :read and can :attach_submission_comment_files
   end
 
   def filter_attributes_for_user(hash, user, session)
@@ -865,6 +901,10 @@ class Assignment < ActiveRecord::Base
 
   def title_with_id
     "#{title} (#{id})"
+  end
+
+  def title_slug
+    truncate_text(title, :ellipsis => '')
   end
 
   def self.title_and_id(str)
@@ -1330,6 +1370,9 @@ class Assignment < ActiveRecord::Base
   named_scope :for_context_codes, lambda {|codes|
     {:conditions => ['assignments.context_code IN (?)', codes] }
   }
+  named_scope :for_course, lambda { |course_id|
+    {:conditions => {:context_type => 'Course', :context_id => course_id}}
+  }
 
   named_scope :due_before, lambda{|date|
     {:conditions => ['assignments.due_at < ?', date] }
@@ -1365,27 +1408,33 @@ class Assignment < ActiveRecord::Base
     end
   }
 
+  named_scope :not_ignored_by, lambda { |user, purpose|
+    {:conditions =>
+         ["NOT EXISTS (SELECT * FROM ignores WHERE asset_type='Assignment' AND asset_id=assignments.id AND user_id=? AND purpose=?)",
+          user.id, purpose]}
+  }
+
   # This should only be used in the course drop down to show assignments needing a submission
-  named_scope :need_submitting_info, lambda{|user_id, limit, ignored_ids|
+  named_scope :need_submitting_info, lambda{|user_id, limit|
     ignored_ids ||= []
-          {:select => 'id, title, points_possible, due_at, context_id, context_type, submission_types, description, could_be_locked, needs_grading_count, all_day_date,' +
-          '(SELECT name FROM courses WHERE id = assignments.context_id) AS context_name',
+          {:select => API_NEEDED_FIELDS.join( ',' ) +
+          ',(SELECT name FROM courses WHERE id = assignments.context_id) AS context_name',
           :conditions =>["(SELECT COUNT(id) FROM submissions
               WHERE assignment_id = assignments.id
               AND submission_type IS NOT NULL
-              AND user_id = ?) = 0 #{ignored_ids.empty? ? "" : "AND id NOT IN (#{ignored_ids.join(',')})"}", user_id],
+              AND user_id = ?) = 0", user_id],
           :limit => limit,
           :order => 'due_at ASC'
     }
   }
 
   # This should only be used in the course drop down to show assignments not yet graded.
-  named_scope :need_grading_info, lambda{|limit, ignore_ids|
+  named_scope :need_grading_info, lambda{|limit|
     ignore_ids ||= []
     {
-      :select => 'assignments.id, title, points_possible, due_at, context_id, context_type, submission_types, description, could_be_locked, all_day_date,' +
-                 '(SELECT name FROM courses WHERE id = assignments.context_id) AS context_name, needs_grading_count',
-      :conditions => "needs_grading_count > 0 #{ignore_ids.empty? ? "" : "AND id NOT IN (#{ignore_ids.join(',')})"}",
+      :select => API_NEEDED_FIELDS.join(',') +
+                 ',(SELECT name FROM courses WHERE id = assignments.context_id) AS context_name, needs_grading_count',
+      :conditions => "needs_grading_count > 0",
       :limit => limit,
       :order=>'due_at ASC'
     }
@@ -1635,6 +1684,8 @@ class Assignment < ActiveRecord::Base
         quiz.workflow_state = 'available'
         quiz.save
       end
+      item.submission_types = 'online_quiz'
+      item.saved_by = :quiz
     end
     if hash[:assignment_group_migration_id]
       item.assignment_group = context.assignment_groups.find_by_migration_id(hash[:assignment_group_migration_id])
@@ -1758,11 +1809,23 @@ class Assignment < ActiveRecord::Base
                             submission_types assignment_group_id allowed_extensions
                             group_category_id notify_of_update peer_reviews workflow_state}
   def frozen?
-    !!(self.freeze_on_copy && self.copied && PluginSetting.settings_for_plugin(:assignment_freezer))
+    !!(self.freeze_on_copy && self.copied &&
+       PluginSetting.settings_for_plugin(:assignment_freezer))
   end
 
+  # indicates complete frozenness for an assignment.
+  # if the user can edit at least one of the attributes, it is not frozen to
+  # them
   def frozen_for_user?(user)
-    frozen? && !self.context.grants_right?(user, :manage_frozen_assignments)
+    return true if user.blank?
+    (frozen? && !self.context.grants_right?(user, :manage_frozen_assignments))&&
+    (frozen_attributes_for_user(user).length == FREEZABLE_ATTRIBUTES.length)
+  end
+
+  def frozen_attributes_for_user(user)
+    FREEZABLE_ATTRIBUTES.select do |freezable_attribute|
+      att_frozen? freezable_attribute, user
+    end
   end
 
   def att_frozen?(att, user=nil)
@@ -1788,36 +1851,55 @@ class Assignment < ActiveRecord::Base
     return if self.copying
     FREEZABLE_ATTRIBUTES.each do |att|
       if self.changes[att] && att_frozen?(att, @updating_user)
-        self.errors.add(att, t('errors.cannot_save_att', "You don't have permission to edit the locked attribute %{att_name}", :att_name => att))
+        self.errors.add(att,
+          t('errors.cannot_save_att',
+            "You don't have permission to edit the locked attribute %{att_name}",
+            :att_name => att))
       end
     end
   end
 
   def needs_grading_count_for_user(user)
     vis = self.context.section_visibilities_for(user)
-    # the needs_grading_count trigger should change self.updated_at, invalidating the cache
-    Rails.cache.fetch(['assignment_user_grading_count', self, user].cache_key) do
-      case self.context.enrollment_visibility_level_for(user, vis)
-        when :full
-          self.needs_grading_count
-        when :sections
-          self.submissions.count('DISTINCT submissions.id',
-            :joins => "INNER JOIN enrollments e ON e.user_id = submissions.user_id",
-            :conditions => [<<-SQL, self.id, self.context.id, vis.map {|v| v[:course_section_id]}])
-            submissions.assignment_id = ?
-              AND e.course_id = ?
-              AND e.course_section_id in (?)
-              AND e.type IN ('StudentEnrollment', 'StudentViewEnrollment')
-              AND e.workflow_state = 'active'
-              AND submissions.submission_type IS NOT NULL
-              AND (submissions.workflow_state = 'pending_review'
-                OR (submissions.workflow_state = 'submitted'
-                  AND (submissions.score IS NULL OR NOT submissions.grade_matches_current_submission)))
-            SQL
-        else
-          0
+    self.shard.activate do
+      # the needs_grading_count trigger should change self.updated_at, invalidating the cache
+      Rails.cache.fetch(['assignment_user_grading_count', self, user].cache_key) do
+        case self.context.enrollment_visibility_level_for(user, vis)
+          when :full
+            self.needs_grading_count
+          when :sections
+            self.submissions.count('DISTINCT submissions.id',
+              :joins => "INNER JOIN enrollments e ON e.user_id = submissions.user_id",
+              :conditions => [<<-SQL, self.id, self.context.id, vis.map {|v| v[:course_section_id]}])
+              submissions.assignment_id = ?
+                AND e.course_id = ?
+                AND e.course_section_id in (?)
+                AND e.type IN ('StudentEnrollment', 'StudentViewEnrollment')
+                AND e.workflow_state = 'active'
+                AND submissions.submission_type IS NOT NULL
+                AND (submissions.workflow_state = 'pending_review'
+                  OR (submissions.workflow_state = 'submitted'
+                    AND (submissions.score IS NULL OR NOT submissions.grade_matches_current_submission)))
+              SQL
+          else
+            0
+        end
       end
     end
   end
 
+  def recompute_submission_lateness_later
+    if due_at_changed?
+      send_later_if_production :recompute_submission_lateness
+    end
+    true
+  end
+
+  def recompute_submission_lateness
+    submissions.each do |s|
+      s.compute_lateness
+      s.save!
+    end
+    true
+  end
 end

@@ -1,4 +1,8 @@
 ActionController::Base.param_parsers.delete(Mime::XML)
+# CVE-2013-0333
+# https://groups.google.com/d/topic/rubyonrails-security/1h2DR63ViGo/discussion
+# With Rails 2.3.16 we could remove this line, but we still prefer JSONGem for performance reasons
+ActiveSupport::JSON.backend = "JSONGem"
 
 if Rails::VERSION::MAJOR == 3 && Rails::VERSION::MINOR >= 1
   raise "This patch has been merged into rails 3.1, remove it from our repo"
@@ -37,39 +41,6 @@ else
       target
     end
   end
-
-  # https://github.com/rails/rails/commit/0e17cf17ebeb70490d7c7cd25c6bf8f9401e44b3
-  # https://github.com/rails/rails/commit/63cd9432265a32d222353b535d60333c2a6a5125
-  # Backport from Rails 3.1
-  ERB::Util.module_eval do
-    # Detect whether 1.9 can transcode with XML escaping.
-    if '"&gt;&lt;&amp;&quot;"' == ('><&"'.encode('utf-8', :xml => :attr) rescue false)
-      def html_escape(s)
-        s = s.to_s
-        if s.html_safe?
-          s
-        else
-          s.encode(s.encoding, :xml => :attr)[1...-1].html_safe
-        end
-      end
-    else
-      def html_escape(s)
-        s = s.to_s
-        if s.html_safe?
-          s
-        else
-          s.gsub(/[&"><]/n) { |special| ERB::Util::HTML_ESCAPE[special] }.html_safe
-        end
-      end
-    end
-
-    remove_method(:h)
-    alias h html_escape
-
-    module_function :h
-    module_function :html_escape
-  end
-
 
   # Fix for has_many :through where the through and target reflections are the
   # same table (the through table needs to be aliased)
@@ -200,133 +171,38 @@ else
       end
     end
   end
-end
 
-if Rails::VERSION::MAJOR == 2
-  module ActiveRecord
-    class Base
-      # So far a new version of rails 2.3 has not been released to patch this.
-      # Hopefully the next minor version (if there is one) will incorporate it
-      # and we can add another && Rails::VERSION::MINOR < condition to above
-      def self.sanitize_sql_hash_for_conditions(attrs, default_table_name = quoted_table_name, top_level = true)
-        attrs = expand_hash_conditions_for_aggregates(attrs)
-
-        conditions = attrs.map do |attr, value|
-          table_name = default_table_name
-
-          if not value.is_a?(Hash)
-            attr = attr.to_s
-
-            # Extract table name from qualified attribute names.
-            if attr.include?('.') and top_level
-              attr_table_name, attr = attr.split('.', 2)
-              attr_table_name = connection.quote_table_name(attr_table_name)
-            else
-              attr_table_name = table_name
-            end
-
-            attribute_condition("#{attr_table_name}.#{connection.quote_column_name(attr)}", value)
-          elsif top_level
-            sanitize_sql_hash_for_conditions(value, connection.quote_table_name(attr.to_s), false)
+  # Handle quoting properly for Infinity and NaN. This fix exists in Rails 3.1
+  # and can be safely removed once we upgrade.
+  #
+  # Adapted from: https://github.com/rails/rails/commit/06c23c4c7ff842f7c6237f3ac43fc9d19509a947
+  #
+  # This patch is covered by tests in spec/initializers/active_record_quoting_spec.rb
+  if defined?(ActiveRecord::ConnectionAdapters::PostgreSQLAdapter)
+    ActiveRecord::ConnectionAdapters::PostgreSQLAdapter.class_eval do
+      # Quotes PostgreSQL-specific data types for SQL input.
+      def quote(value, column = nil) #:nodoc:
+        if value.kind_of?(String) && column && column.type == :binary
+          "'#{escape_bytea(value)}'"
+        elsif value.kind_of?(String) && column && column.sql_type == 'xml'
+          "xml '#{quote_string(value)}'"
+        elsif value.kind_of?(Float)
+          if value.infinite? && column && column.type == :datetime
+            "'#{value.to_s.downcase}'"
+          elsif value.infinite? || value.nan?
+            "'#{value.to_s}'"
           else
-            raise ActiveRecord::StatementInvalid
+            super
           end
-        end.join(' AND ')
-
-        replace_bind_variables(conditions, expand_range_bind_variables(attrs.values))
-      end
-
-      # Fix for CVE-2012-5664
-      # An unfortunate load-order problem means that we need to make sure and
-      # patch the pre-will_paginate version of this method. The real solution
-      # here is to fork Rails 2.3 and directly patch the code, which is in the
-      # works.
-      raise("will_paginate is expected to already be loaded here") unless method(:method_missing_without_paginate)
-      def self.method_missing_without_paginate(method_id, *arguments, &block)
-        if match = DynamicFinderMatch.match(method_id)
-          attribute_names = match.attribute_names
-          super unless all_attributes_exists?(attribute_names)
-          if match.finder?
-            finder = match.finder
-            bang = match.bang?
-
-            self.class_eval <<-EOS, __FILE__, __LINE__ + 1
-                  def self.#{method_id}(*args)
-                    options = if args.length > #{attribute_names.size}
-                                args.extract_options!
-                              else
-                                {}
-                              end
-                    attributes = construct_attributes_from_arguments(
-                      [:#{attribute_names.join(',:')}],
-                      args
-                    )
-                    finder_options = { :conditions => attributes }
-                    validate_find_options(options)
-                    set_readonly_option!(options)
-
-                    #{'result = ' if bang}if options[:conditions]
-                      with_scope(:find => finder_options) do
-                        find(:#{finder}, options)
-                      end
-                    else
-                      find(:#{finder}, options.merge(finder_options))
-                    end
-                    #{'result || raise(RecordNotFound, "Couldn\'t find #{name} with #{attributes.to_a.collect {|pair| "#{pair.first} = #{pair.second}"}.join(\', \')}")' if bang}
-                  end
-            EOS
-            send(method_id, *arguments)
-          elsif match.instantiator?
-            instantiator = match.instantiator
-            self.class_eval <<-EOS, __FILE__, __LINE__ + 1
-                  def self.#{method_id}(*args)
-                    attributes = [:#{attribute_names.join(',:')}]
-                    protected_attributes_for_create, unprotected_attributes_for_create = {}, {}
-                    args.each_with_index do |arg, i|
-                      if arg.is_a?(Hash)
-                        protected_attributes_for_create = args[i].with_indifferent_access
-                      else
-                        unprotected_attributes_for_create[attributes[i]] = args[i]
-                      end
-                    end
-
-                    find_attributes = (protected_attributes_for_create.merge(unprotected_attributes_for_create)).slice(*attributes)
-
-                    options = { :conditions => find_attributes }
-                    set_readonly_option!(options)
-
-                    record = find(:first, options)
-
-                    if record.nil?
-                      record = self.new do |r|
-                        r.send(:attributes=, protected_attributes_for_create, true) unless protected_attributes_for_create.empty?
-                        r.send(:attributes=, unprotected_attributes_for_create, false) unless unprotected_attributes_for_create.empty?
-                      end
-                      #{'yield(record) if block_given?'}
-            #{'record.save' if instantiator == :create}
-                      record
-                    else
-                      record
-                    end
-                  end
-            EOS
-            send(method_id, *arguments, &block)
-          end
-        elsif match = DynamicScopeMatch.match(method_id)
-          attribute_names = match.attribute_names
-          super unless all_attributes_exists?(attribute_names)
-          if match.scope?
-            self.class_eval <<-EOS, __FILE__, __LINE__ + 1
-                  def self.#{method_id}(*args)                        # def self.scoped_by_user_name_and_password(*args)
-                    options = args.extract_options!                   #   options = args.extract_options!
-                    attributes = construct_attributes_from_arguments( #   attributes = construct_attributes_from_arguments(
-                      [:#{attribute_names.join(',:')}], args          #     [:user_name, :password], args
-                    )                                                 #   )
-                                                                      #
-                    scoped(:conditions => attributes)                 #   scoped(:conditions => attributes)
-                  end                                                 # end
-            EOS
-            send(method_id, *arguments)
+        elsif value.kind_of?(Numeric) && column && column.sql_type == 'money'
+          # Not truly string input, so doesn't require (or allow) escape string syntax.
+          "'#{value.to_s}'"
+        elsif value.kind_of?(String) && column && column.sql_type =~ /^bit/
+          case value
+            when /^[01]*$/
+              "B'#{value}'" # Bit-string notation
+            when /^[0-9A-F]*$/i
+              "X'#{value}'" # Hexadecimal notation
           end
         else
           super

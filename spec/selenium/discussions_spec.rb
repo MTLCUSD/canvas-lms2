@@ -10,7 +10,6 @@ describe "discussions" do
   end
 
   context "as a teacher" do
-    DISCUSSION_NAME = 'new discussion'
 
     before (:each) do
       course_with_teacher_logged_in
@@ -120,6 +119,21 @@ describe "discussions" do
         it_should_behave_like "discussion and announcement individual tests"
       end
 
+      it "should allow teachers to edit discussions settings" do
+        assignment_name = 'topic assignment'
+        title = 'assignment topic title'
+        @course.allow_student_discussion_topics.should == true
+        @course.discussion_topics.create!(:title => title, :user => @user, :assignment => @course.assignments.create!(:name => assignment_name))
+        get "/courses/#{@course.id}/discussion_topics"
+        f('#edit_discussions_settings').click
+        wait_for_ajax_requests
+        f('#allow_student_discussion_topics').click
+        submit_form('.dialogFormView')
+        wait_for_ajax_requests
+        @course.reload
+        @course.allow_student_discussion_topics.should == false
+      end
+
       it "should filter by assignments" do
         assignment_name = 'topic assignment'
         title = 'assignment topic title'
@@ -204,6 +218,56 @@ describe "discussions" do
         toggle(:off)
         confirm(:off)
       end
+    end
+  end
+
+  context "with blank pages fetched from server" do
+    before(:each) do
+      course_with_student_logged_in
+    end
+
+    it "should display empty version of view if there are no topics" do
+      get "/courses/#{@course.id}/discussion_topics"
+      wait_for_ajaximations
+      f('.btn-large').should be_present
+      f('.btn-large').should be_displayed
+    end
+
+    it "should display empty version of view if all pages are empty" do
+      (1..15).each do |n|
+        @course.discussion_topics.create!({
+          :title => "general topic #{n}",
+          :discussion_type => 'side_comment',
+          :delayed_post_at => 5.days.from_now,
+        })
+      end
+
+      get "/courses/#{@course.id}/discussion_topics"
+      wait_for_ajaximations
+      f('.btn-large').should be_present
+      f('.btn-large').should be_displayed
+    end
+    
+    it "should display topics even if first page is blank but later pages have data" do
+      # topics that should be visible
+      (1..5).each do |n|
+        @course.discussion_topics.create!({
+          :title => "general topic #{n}",
+          :discussion_type => 'side_comment',
+        })
+      end
+      # a page worth of invisible topics
+      (6..15).each do |n|
+        @course.discussion_topics.create!({
+          :title => "general topic #{n}",
+          :discussion_type => 'side_comment',
+          :delayed_post_at => 5.days.from_now,
+        })
+      end
+
+      get "/courses/#{@course.id}/discussion_topics"
+      wait_for_ajaximations
+      f('.btn-large').should be_nil
     end
   end
 

@@ -64,6 +64,7 @@ class Account < ActiveRecord::Base
   has_many :assessment_question_banks, :as => :context, :include => [:assessment_questions, :assessment_question_bank_users]
   has_many :roles
   has_many :all_roles, :class_name => 'Role', :foreign_key => 'root_account_id'
+  has_many :progresses, :as => :context
   def inherited_assessment_question_banks(include_self = false, *additional_contexts)
     sql = []
     conds = []
@@ -164,6 +165,7 @@ class Account < ActiveRecord::Base
   # be nice to be able to see the course first if you weren't expecting the
   # invitation.
   add_setting :allow_invitation_previews, :boolean => true, :root_only => true, :default => false
+  add_setting :self_registration, :boolean => true, :root_only => true, :default => false
 
   def settings=(hash)
     if hash.is_a?(Hash)
@@ -217,6 +219,10 @@ class Account < ActiveRecord::Base
 
   def open_registration?
     !!settings[:open_registration] && canvas_authentication?
+  end
+
+  def self_registration?
+    !!settings[:self_registration] && canvas_authentication?
   end
 
   def ip_filters=(params)
@@ -376,7 +382,7 @@ class Account < ActiveRecord::Base
 
   def self_enrollment_course_for(code)
     all_courses.
-      where(:self_enrollment => true, :self_enrollment_code => code).
+      where(:self_enrollment_code => code).
       first
   end
 
@@ -460,14 +466,16 @@ class Account < ActiveRecord::Base
     res = [self]
 
     if ActiveRecord::Base.configurations[RAILS_ENV]['adapter'] == 'postgresql'
-      res.concat Account.find_by_sql(<<-SQL) if self.parent_account_id
-          WITH RECURSIVE t AS (
-            SELECT * FROM accounts WHERE id=#{self.parent_account_id}
-            UNION
-            SELECT accounts.* FROM accounts INNER JOIN t ON accounts.id=t.parent_account_id
-          )
-          SELECT * FROM t
-        SQL
+      self.shard.activate do
+        res.concat Account.find_by_sql(<<-SQL) if self.parent_account_id
+            WITH RECURSIVE t AS (
+              SELECT * FROM accounts WHERE id=#{self.parent_account_id}
+              UNION
+              SELECT accounts.* FROM accounts INNER JOIN t ON accounts.id=t.parent_account_id
+            )
+            SELECT * FROM t
+          SQL
+      end
     else
       account = self
       while account.parent_account
@@ -503,6 +511,12 @@ class Account < ActiveRecord::Base
     self.account_users.find_by_user_id(user && user.id)
   end
 
+  def available_custom_account_roles
+    account_roles = roles.for_accounts.active
+    account_roles |= self.parent_account.available_custom_account_roles if self.parent_account
+    account_roles
+  end
+
   def available_account_roles
     account_roles = roles.for_accounts.active.map(&:name)
     account_roles |= ['AccountAdmin']
@@ -510,16 +524,15 @@ class Account < ActiveRecord::Base
     account_roles
   end
 
-  def available_course_roles
-    course_roles = roles.for_courses.active.map(&:name)
-    course_roles |= parent_account.available_course_roles if parent_account
-    course_roles
+  def available_course_roles(include_inactive=false)
+    available_course_roles_by_name(include_inactive).keys
   end
 
-  def available_course_roles_by_name
+  def available_course_roles_by_name(include_inactive=false)
+    scope = include_inactive ? roles.for_courses.not_deleted : roles.for_courses.active
     role_map = {}
-    roles.for_courses.active.each { |role| role_map[role.name] = role }
-    role_map.reverse_merge!(parent_account.available_course_roles_by_name) if parent_account
+    scope.each { |role| role_map[role.name] = role }
+    role_map.reverse_merge!(parent_account.available_course_roles_by_name(include_inactive)) if parent_account
     role_map
   end
 
@@ -600,7 +613,7 @@ class Account < ActiveRecord::Base
   set_policy do
     enrollment_types = RoleOverride.enrollment_types.map { |role| role[:name] }
     RoleOverride.permissions.each do |permission, details|
-      given { |user| self.account_users_for(user).any? { |au| au.has_permission_to?(permission) && (!details[:if] || send(details[:if])) } }
+      given { |user| self.account_users_for(user).any? { |au| au.has_permission_to?(self, permission) && (!details[:if] || send(details[:if])) } }
       can permission
       can :create_courses if permission == :manage_courses
 
@@ -789,7 +802,7 @@ class Account < ActiveRecord::Base
           account = @special_accounts[special_account_type] = Account.find_by_id(special_account_id)
         end
       end
-      unless account
+      if !account && default_account_name
         # TODO i18n
         t '#account.default_site_administrator_account_name', 'Site Admin'
         t '#account.default_account_name', 'Default Account'
@@ -811,16 +824,18 @@ class Account < ActiveRecord::Base
 
   # Updates account associations for all the courses and users associated with this account
   def update_account_associations
-    account_chain_cache = {}
-    all_user_ids = []
-    all_user_ids += Course.update_account_associations(self.associated_courses, :skip_user_account_associations => true, :account_chain_cache => account_chain_cache)
+    self.shard.activate do
+      account_chain_cache = {}
+      all_user_ids = []
+      all_user_ids += Course.update_account_associations(self.associated_courses, :skip_user_account_associations => true, :account_chain_cache => account_chain_cache)
 
-    # Make sure we have all users with existing account associations.
-    # (This should catch users with Pseudonyms associated with the account.)
-    all_user_ids += UserAccountAssociation.scoped(:select => 'user_id', :conditions => { :account_id => self.id }).map(&:user_id)
+      # Make sure we have all users with existing account associations.
+      # (This should catch users with Pseudonyms associated with the account.)
+      all_user_ids += UserAccountAssociation.scoped(:select => 'user_id', :conditions => { :account_id => self.id }).map(&:user_id)
 
-    # Update the users' associations as well
-    User.update_account_associations(all_user_ids.uniq, :account_chain_cache => account_chain_cache)
+      # Update the users' associations as well
+      User.update_account_associations(all_user_ids.uniq, :account_chain_cache => account_chain_cache)
+    end
   end
   
   # this will take an account and make it a sub_account of
@@ -863,7 +878,7 @@ class Account < ActiveRecord::Base
   end
   
   def turnitin_settings
-    if self.turnitin_account_id && self.turnitin_shared_secret && !self.turnitin_account_id.empty? && !self.turnitin_shared_secret.empty?
+    if self.turnitin_account_id.present? && self.turnitin_shared_secret.present?
       [self.turnitin_account_id, self.turnitin_shared_secret]
     else
       self.parent_account.turnitin_settings rescue nil
@@ -934,9 +949,10 @@ class Account < ActiveRecord::Base
       tabs = []
       tabs << { :id => TAB_USERS, :label => t('#account.tab_users', "Users"), :css_class => 'users', :href => :account_users_path } if user && self.grants_right?(user, nil, :read_roster)
       tabs << { :id => TAB_PERMISSIONS, :label => t('#account.tab_permissions', "Permissions"), :css_class => 'permissions', :href => :account_permissions_path } if user && self.grants_right?(user, nil, :manage_role_overrides)
+      tabs << { :id => TAB_SUB_ACCOUNTS, :label => t('#account.tab_sub_accounts', "Sub-Accounts"), :css_class => 'sub_accounts', :href => :account_sub_accounts_path } if manage_settings
       tabs << { :id => TAB_AUTHENTICATION, :label => t('#account.tab_authentication', "Authentication"), :css_class => 'authentication', :href => :account_account_authorization_configs_path } if manage_settings
       tabs << { :id => TAB_PLUGINS, :label => t("#account.tab_plugins", "Plugins"), :css_class => "plugins", :href => :plugins_path, :no_args => true } if self.grants_right?(user, nil, :manage_site_settings)
-      tabs << { :id => TAB_JOBS, :label => t("#account.tab_jobs", "Jobs"), :css_class => "jobs", :href => :jobs_path, :no_args => true } if self.grants_right?(user, nil, :manage_jobs)
+      tabs << { :id => TAB_JOBS, :label => t("#account.tab_jobs", "Jobs"), :css_class => "jobs", :href => :jobs_path, :no_args => true } if self.grants_right?(user, nil, :view_jobs)
       tabs << { :id => TAB_DEVELOPER_KEYS, :label => t("#account.tab_developer_keys", "Developer Keys"), :css_class => "developer_keys", :href => :developer_keys_path, :no_args => true } if self.grants_right?(user, nil, :manage_developer_keys)
     else
       tabs = []

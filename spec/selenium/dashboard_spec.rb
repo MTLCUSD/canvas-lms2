@@ -9,14 +9,26 @@ describe "dashboard" do
       course_with_student_logged_in(:active_all => true)
     end
 
+    def create_announcement
+      factory_with_protected_attributes(Announcement, {
+        :context => @course,
+        :title => "hey all read this k",
+        :message => "announcement"
+      })
+    end
+
+    def click_recent_activity_header
+      f('.stream-announcement .stream_header').click
+    end
+
     def test_hiding(url)
-      factory_with_protected_attributes(Announcement, :context => @course, :title => "hey all read this k", :message => "announcement")
+      create_announcement
       items = @user.stream_item_instances
       items.size.should == 1
       items.first.hidden.should == false
 
       get url
-      f('.stream-announcement .stream_header').click
+      click_recent_activity_header
       item_selector = '#announcement-details tbody tr'
       ff(item_selector).size.should == 1
       f('#announcement-details .ignore-item').click
@@ -38,13 +50,55 @@ describe "dashboard" do
       test_hiding("/courses/#{@course.to_param}")
     end
 
+    def click_recent_activity_header(type='announcement')
+      f(".stream-#{type} .stream_header").click
+    end
+
+    def assert_recent_activity_category_closed(type='announcement')
+      f(".stream-#{type} .details_container").should_not be_displayed
+    end
+
+    def assert_recent_activity_category_is_open(type='announcement')
+      f(".stream-#{type} .details_container").should be_displayed
+    end
+
+    def click_recent_activity_course_link(type='announcement')
+      f(".stream-#{type} .links a").click
+    end
+
+    # so we can click the link w/o a page load
+    def disable_recent_activity_header_course_link
+      driver.execute_script <<-JS
+        $('.stream-announcement .links a').attr('href', '#');
+      JS
+    end
+
+    it "should expand/collapse recent activity category" do
+      create_announcement
+      get '/'
+      assert_recent_activity_category_closed
+      click_recent_activity_header
+      assert_recent_activity_category_is_open
+      click_recent_activity_header
+      assert_recent_activity_category_closed
+    end
+
+    it "should not expand category when a course/group link is clicked" do
+      create_announcement
+      get '/'
+      assert_recent_activity_category_closed
+      disable_recent_activity_header_course_link
+      click_recent_activity_course_link
+      assert_recent_activity_category_closed
+    end
+
     it "should update the item count on stream item hide"
     it "should remove the stream item category if all items are removed"
 
     it "should show conversation stream items on the dashboard" do
-      c = User.create.initiate_conversation([@user.id, User.create.id])
+      c = User.create.initiate_conversation([@user, User.create])
       c.add_message('test')
-      c.add_participants([User.create.id])
+      c.add_participants([User.create])
 
       items = @user.stream_item_instances
       items.size.should == 1
@@ -96,10 +150,10 @@ describe "dashboard" do
         end
       end
 
-      DUE_DATE = Time.now.utc + 2.days
+      due_date = Time.now.utc + 2.days
       names = ['locked discussion assignment', 'locked quiz']
-      @course.assignments.create(:name => names[0], :submission_types => 'discussion', :due_at => DUE_DATE, :lock_at => Time.now, :unlock_at => DUE_DATE)
-      q = @course.quizzes.create!(:title => names[1], :due_at => DUE_DATE, :lock_at => Time.now, :unlock_at => DUE_DATE)
+      @course.assignments.create(:name => names[0], :submission_types => 'discussion', :due_at => due_date, :lock_at => Time.now, :unlock_at => due_date)
+      q = @course.quizzes.create!(:title => names[1], :due_at => due_date, :lock_at => Time.now, :unlock_at => due_date)
       q.workflow_state = 'available'
       q.save
       q.reload

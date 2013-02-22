@@ -14,7 +14,9 @@
   <% if !@embedded_view %>
     <h2><%= t :course_enrollment, "Course Enrollment" %></h2>
   <% end %>
-  <% if @current_user && @course.user_is_student?(@current_user, :include_future => true) %>
+  <% if !@course.self_enrollment? %>
+    <%= render :partial => 'enrollment_closed' %>
+  <% elsif @current_user && @course.user_is_student?(@current_user, :include_future => true) %>
     <% if params[:enrolled] %>
       <%= render :partial => 'successfully_enrolled' %>
     <% else %>
@@ -25,7 +27,7 @@
   <% else %>
     <% if @current_user %>
       <%= render :partial => 'confirm_enrollments' %>
-    <% elsif @domain_root_account.open_registration? %>
+    <% elsif @domain_root_account.self_registration? %>
       <%= render :partial => 'authenticate_or_register' %>
     <% else %>
       <%= render :partial => 'authenticate' %>

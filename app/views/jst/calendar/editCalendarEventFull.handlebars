@@ -1,10 +1,13 @@
 <form id="editCalendarEventFull" class="{{#if use_section_dates}}use_section_dates{{/if}}">
   <input class="title" name="title" placeholder="{{#t "event_title"}}Event Title{{/t}}" value="{{title}}" maxlength="255"/>
 
+  <a href="#" style="font-size: 0.8em; float: right;" class="switch_event_description_view">{{#t "#links.switch_views"}}Switch Views{{/t}}</a>
+  <div class="clear"></div>
   <textarea name="description">{{description}}</textarea>
 
   {{#if course_sections}}
     <label><input type="checkbox" name="use_section_dates" value="1" {{#if use_section_dates}}checked{{/if}}>{{#t "different_date_for_each_section"}}Use a different date for each section{{/t}}</label>
+    <input type="hidden" name="remove_child_events" value="{{#unless use_section_dates}}1{{/unless}}" />
   {{/if}}
 
   <div class="hide_if_using_sections date_start_end_row">

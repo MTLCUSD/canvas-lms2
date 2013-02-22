@@ -47,8 +47,10 @@ Delayed::Periodic.cron 'Attachment.process_scribd_conversion_statuses', '*/5 * *
 end
 
 Delayed::Periodic.cron 'CrocodocDocument.update_process_states', '*/5 * * * *' do
-  Shard.with_each_shard do
-    CrocodocDocument.update_process_states
+  if Canvas::Crocodoc.config
+    Shard.with_each_shard do
+      CrocodocDocument.update_process_states
+    end
   end
 end
 
@@ -73,7 +75,9 @@ if PageView.redis_queue?
   Delayed::Periodic.cron 'PageView.process_cache_queue', '*/1 * * * *' do
     Shard.with_each_shard do
       unless Shard.current.settings[:process_page_view_queue] == false
-        PageView.send_later_enqueue_args(:process_cache_queue, :singleton => "PageView.process_cache_queue:#{Shard.current.id}")
+        PageView.send_later_enqueue_args(:process_cache_queue,
+                                         :singleton => "PageView.process_cache_queue:#{Shard.current.id}",
+                                         :max_attempts => 1)
       end
     end
   end
@@ -104,4 +108,14 @@ Delayed::Periodic.cron 'Attachment.do_notifications', '*/10 * * * *', :priority 
   Shard.with_each_shard do
     Attachment.do_notifications
   end
+end
+
+Delayed::Periodic.cron 'Ignore.cleanup', '45 23 * * *' do
+  Shard.with_each_shard do
+    Ignore.send_later_enqueue_args(:cleanup, :singleton => "Ignore.cleanup:#{Shard.current.id}")
+  end
+end
+
+Dir[Rails.root.join('vendor', 'plugins', '*', 'config', 'periodic_jobs.rb')].each do |plugin_periodic_jobs|
+  require plugin_periodic_jobs
 end
