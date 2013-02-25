@@ -1,6 +1,10 @@
 source :rubygems
 
 ONE_NINE = RUBY_VERSION >= "1.9."
+if RUBY_VERSION =~ /1.9/
+    Encoding.default_external = Encoding::UTF_8
+    Encoding.default_internal = Encoding::UTF_8
+end
 
 gem 'rails',          '2.3.17'
 gem 'authlogic',      '2.1.3'
