@@ -78,8 +78,13 @@ group :assets do
   gem 'bootstrap-sass', '2.0.3.1'
 end
 
+# group :mysql do
+#   gem 'mysql',        '2.8.1'
+# end
+
 group :mysql do
-  gem 'mysql',        '2.8.1'
+  gem 'mysql2', '0.3.11'
+  gem 'activerecord-mysql2-adapter', '0.0.3'
 end
 
 group :postgres do
