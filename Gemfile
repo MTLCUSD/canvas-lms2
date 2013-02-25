@@ -1,4 +1,7 @@
-source :rubygems
+# source :rubygems
+# Seems rubygems is moving to SSL only in the futrue so we are adding
+# This so we dont get a stupid alert everytime we use bundler
+source "https://rubygems.org"
 
 ONE_NINE = RUBY_VERSION >= "1.9."
 if RUBY_VERSION =~ /1.9/
