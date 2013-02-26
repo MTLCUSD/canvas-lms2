@@ -26,6 +26,7 @@
 /public/javascripts/compiled/
 /public/javascripts/jst/
 /public/javascripts/translations/
+/public/javascripts/translations/_core_en.js
 /public/optimized/
 /public/stylesheets/compiled/
 /spec/javascripts/

@@ -3,13 +3,14 @@
 # This so we dont get a stupid alert everytime we use bundler
 source "https://rubygems.org"
 
-gem 'hpricot',        '0.8.6'
+# Empowered Required Gems
+
+  # hpricot is required for wiki_api_controller.rb
+  gem 'hpricot',        '0.8.6'
+
+#End Empowered Rrequired Gems
 
 ONE_NINE = RUBY_VERSION >= "1.9."
-# if RUBY_VERSION =~ /1.9/
-#     Encoding.default_external = Encoding::UTF_8
-#     Encoding.default_internal = Encoding::UTF_8
-# end
 
 gem 'rails',          '2.3.17'
 gem 'authlogic',      '2.1.3'
@@ -82,10 +83,6 @@ group :assets do
   gem 'compass-rails', '1.0.2'
   gem 'bootstrap-sass', '2.0.3.1'
 end
-
-# group :mysql do
-#   gem 'mysql',        '2.8.1'
-# end
 
 group :mysql do
   gem 'mysql',        '2.8.1'

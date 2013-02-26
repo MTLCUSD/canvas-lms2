@@ -22,12 +22,12 @@ class WikiApiController < ApplicationController
       s3_url = attachee.cached_s3_url
       s3_url = s3_url.match(/#{get_amazon_folder}\/attachments\/\d*/).to_s + "/#{attachee.filename}"
       s3_url = AWS::S3::S3Object.url_for(s3_url,@s3_config[:bucket_name],:expires_in => 3600 * 24* 365 * 10)
-      puts "attachee.respond_to?(:cached_s3_url) and s3_url: #{s3_url}"
+      #puts "attachee.respond_to?(:cached_s3_url) and s3_url: #{s3_url}"
     elsif attachee.respond_to?(:s3_url)
       s3_url = attachee.s3_url
       s3_url = s3_url.match(/#{get_amazon_folder}\/attachments\/\d*/).to_s + "/#{attachee.filename}"
       s3_url = AWS::S3::S3Object.url_for(s3_url,@s3_config[:bucket_name],:expires_in => 3600 * 24* 365 * 10)
-      puts "attachee.respond_to?(:s3_url) and s3_url: #{s3_url}"
+      #puts "attachee.respond_to?(:s3_url) and s3_url: #{s3_url}"
     else
       s3_url = "uh oh.. there is not an s3 url that is either cached or available"
     end
@@ -40,11 +40,11 @@ class WikiApiController < ApplicationController
       element = this_link.name == "a"? 'href' : 'src' # if it's an a tag we are looking for href and if it's not then it is an img tag and we are looking for src
 
       #wiki_page[:url] = AWS::S3::S3Objects.url_for('account_1/attachments/434/page5_1.jpg','lms-dev1-empowered-com',:expires_in => 3600 * 24 * 365 * 10)
-      puts "found link for wiki_api #{this_link}"
+      #puts "found link for wiki_api #{this_link}"
       Rails.logger.info "LOG: this link to be searched is #{this_link}"
       if this_link[element]
         this_link[element] = this_link[element].gsub(/\/courses\/\d{1,5}\/files\/\d{1,5}\/preview/) do  |attachment|
-          Rails.logger.info "LOG: ERIC #{attachment}"
+          #Rails.logger.info "LOG: ERIC #{attachment}"
           attachment_id = attachment.split("/")[4]
           attachee = Attachment.find(attachment_id)
           return_s3_url_from_attachment(attachee)
@@ -64,7 +64,7 @@ class WikiApiController < ApplicationController
       #      end
       if this_link[element]
         this_link[element] = this_link[element].gsub(/\/courses\/\d{1,5}\/files\/\d{1,5}\/preview/) do  |attachment|
-          Rails.logger.info "LOG: ERIC #{attachment}"
+          #Rails.logger.info "LOG: ERIC #{attachment}"
           attachment_id = attachment.split("/")[4]
           attachee = Attachment.find(attachment_id)
           return_s3_url_from_attachment(attachee)
@@ -78,11 +78,11 @@ class WikiApiController < ApplicationController
           display_name = display_name.gsub(/&amp;/,"&")
           context = attachment.split("/").third
           sql = 'select id from attachments where display_name = "'+ display_name.to_s + '" and context_id = ' + context.to_s
-          puts sql
+          #puts sql
           Rails.logger.info "sql of #{sql}"
           unless Attachment.find_by_sql(sql).empty?
             attachee_id = Attachment.find_by_sql(sql).first[:id]
-            puts "found an attachee_id of #{attachee_id}"
+            #puts "found an attachee_id of #{attachee_id}"
             attachment = return_s3_url_from_attachment(Attachment.find(attachee_id))
           else
             Rails.logger.info "sql of #{sql} resulted in no results...context :#{context} and display-name of #{display_name} for attachment #{attachment}"
@@ -93,7 +93,7 @@ class WikiApiController < ApplicationController
 
       if this_link[element]
       then
-        puts "finding matches of links with wkis"
+        #puts "finding matches of links with wkis"
         this_link[element] = this_link[element].gsub(/\/courses\/\d*\/wiki\/\S*/) do |course_url|
           c = Course.find(course_url.split("/").third)
           title = course_url.split("/").last
