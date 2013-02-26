@@ -676,6 +676,9 @@ ActionController::Routing::Routes.draw do |map|
       courses.post 'courses/:course_id/folders', :controller => :folders, :action => :create
       courses.get  'courses/:course_id/folders/:id', :controller => :folders, :action => :show, :path_name => 'course_folder'
       courses.put  'accounts/:account_id/courses', :action => :batch_update
+      # EMPOWERED API'S
+      courses.get 'courses/:course_id/wikis', :controller => :wiki_api, :action => :show_course_wikis
+      # END EMPOWERED API'S
     end
 
     api.with_options(:controller => :tabs) do |tabs|

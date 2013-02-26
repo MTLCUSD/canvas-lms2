@@ -3,6 +3,8 @@
 # This so we dont get a stupid alert everytime we use bundler
 source "https://rubygems.org"
 
+gem 'hpricot',        '0.8.6'
+
 ONE_NINE = RUBY_VERSION >= "1.9."
 # if RUBY_VERSION =~ /1.9/
 #     Encoding.default_external = Encoding::UTF_8
