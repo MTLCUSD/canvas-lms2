@@ -681,6 +681,13 @@ ActionController::Routing::Routes.draw do |map|
       # END EMPOWERED API'S
     end
 
+    # More EMPOWERED API's
+    api.with_options(:controller => :manifest_api) do |manifest|
+      manifest.get 'manifest/:manifest_id', :action  => :generate, :path_name => 'generate'
+      manifest.get 'manifest_careers/:manifest_id', :action => :generate_stages
+    end
+    # END EMPOWERED API'S
+
     api.with_options(:controller => :tabs) do |tabs|
       tabs.get "courses/:course_id/tabs", :action => :index, :path_name => 'course_tabs'
       tabs.get "groups/:group_id/tabs", :action => :index, :path_name => 'group_tabs'
