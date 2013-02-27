@@ -980,6 +980,21 @@ ActionController::Routing::Routes.draw do |map|
       search.get 'search/recipients', :action => 'recipients', :path_name => 'search_recipients'
     end
 
+   # Empowered Quiz
+    api.with_options(:controller => :quiz_api) do |quiz|
+      quiz.post 'quiz/:quiz_id', :action  => :save_quiz_as_student, :path_name => 'quiz_save_as_student'
+      quiz.post 'quiz_backup/:quiz_id', :action  => :backup, :path_name => 'backup'
+      quiz.get 'quiz_submissions/:quiz_id', :action  => :show_past_quizzes, :path_name => 'show_quiz'
+      quiz.get 'quiz/:quiz_id', :action  => :show_quiz, :path_name => 'show_quiz'
+    end
+
+    api.with_options(:controller => :wiki_api) do |wiki|
+      wiki.get 'wiki/:wiki_id', :action  => :generate, :path_name => 'generate'
+    end
+
+    # End Empowered
+
+
     api.post 'files/:id/create_success', :controller => :files, :action => :api_create_success, :path_name => 'files_create_success'
     api.get 'files/:id/create_success', :controller => :files, :action => :api_create_success, :path_name => 'files_create_success'
 
