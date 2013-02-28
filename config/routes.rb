@@ -940,7 +940,8 @@ ActionController::Routing::Routes.draw do |map|
       groups.resources :groups, :except => [:index]
       groups.get 'users/self/groups', :action => :index, :path_name => "current_user_groups"
       groups.get 'accounts/:account_id/groups', :action => :context_index, :path_name => 'account_user_groups'
-      groups.get 'courses/:course_id/groups', :action => :context_index, :path_name => 'course_user_groups'
+      #Commented out since we seem to be using our own contrller for this EMPOWERED
+      #groups.get 'courses/:course_id/groups', :action => :context_index, :path_name => 'course_user_groups'
       groups.get 'groups/:group_id/users', :action => :users, :path_name => 'group_users'
       groups.post 'groups/:group_id/invite', :action => :invite
       groups.post 'groups/:group_id/files', :action => :create_file
@@ -997,6 +998,10 @@ ActionController::Routing::Routes.draw do |map|
 
     api.with_options(:controller => :wiki_api) do |wiki|
       wiki.get 'wiki/:wiki_id', :action  => :generate, :path_name => 'generate'
+    end
+
+    api.with_options(:controller => :groups_api) do |group|
+      group.get 'courses/:course_id/groups', :action  => :get_course_student_groups
     end
 
     # End Empowered
