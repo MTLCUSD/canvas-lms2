@@ -34,7 +34,8 @@ class Assignment < ActiveRecord::Base
     :peer_reviews, :automatic_peer_reviews, :grade_group_students_individually,
     :notify_of_update, :time_zone_edited, :turnitin_enabled, :turnitin_settings,
     :set_custom_field_values, :context, :position, :allowed_extensions,
-    :external_tool_tag_attributes, :freeze_on_copy, :assignment_group_id
+    :external_tool_tag_attributes, :freeze_on_copy, :assignment_group_id, :url
+  #, :cached_description, :cached_url
     
   attr_accessor :original_id, :updating_user, :copying
 
@@ -1716,6 +1717,43 @@ class Assignment < ActiveRecord::Base
         item.external_tool_tag = nil
       end
     end
+
+    #Empowered stuff
+
+
+    if ["read","watch","listen","visit"].include? item.submission_types.downcase
+      unless hash['url'].empty?
+
+        ##Rails.logger.info("item.description #{item.description}")
+        h = Hpricot(item.description)
+        href = nil
+        links = h.search('a')
+        links.each do |this_link|
+          href = this_link['href']
+          ##Rails.logger.info "found a link and am replacing!  new_url : #{href}  old_url : hash['url'] : #{hash['url']}"
+        end
+        #Rails.logger.info("hash['url'] #{hash['url']}")
+        #Rails.logger.info("has an url and a hash of attachment ids? #{hash[:attachment_ids]}")
+        ## TODO : Cleanse this url and make it appropriate per course.
+        # converted_url = ImportedHtmlConverter.convert_url(hash[:url] || "", context)
+        # #Rails.logger.debug("converted_url: #{converted_url} \n and converted_url.empty? : #{converted_url.empty?}")
+        item.url = hash['url']
+        if href and !hash['url'].match(/^http/)
+          item.url = href
+        elsif hash['url'].match(/^http|^www/)
+          item.url = hash['url']
+          # item.url = converted_url
+        else
+          #Rails.logger.info "no href :#{href} or converted_url : #{converted_url}"
+
+        end
+        #Rails.logger.debug("item.url pre-save : #{item.url}")
+        item.save_without_broadcasting!
+      end
+    end
+
+    #end Empowered stuff
+
 
     if context.respond_to?(:assignment_group_no_drop_assignments) && context.assignment_group_no_drop_assignments
       if group = context.assignment_group_no_drop_assignments[item.migration_id]

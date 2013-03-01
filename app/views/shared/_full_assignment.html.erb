@@ -131,6 +131,12 @@
           <select class="assignment_type" name="assignment_type" style="<%= hidden if is_discussion_topic %>">
             <option value="assignment" <%= "selected" if (assignment.submission_types != 'online_quiz' && assignment.submission_types != 'attendance' && assignment.submission_types != 'not_graded' rescue true) %>><%= t 'options.assignment', "Assignment" %></option>
             <option value="discussion_topic" <%= "selected" if (assignment.submission_types == 'discussion_topic' rescue false) %>><%= t 'options.discussion', "Discussion" %></option>
+            <!-- Empowered Added Options -->
+            <option value="READ" <%= "selected" if (assignment.submission_types == 'READ' rescue false) %>><%= t 'options.read', "READ" %></option>
+            <option value="WATCH" <%= "selected" if (assignment.submission_types == 'WATCH' rescue false) %>><%= t 'options.watch', "WATCH" %></option>
+            <option value="LISTEN" <%= "selected" if (assignment.submission_types == 'LISTEN' rescue false) %>><%= t 'options.listen', "LISTEN" %></option>
+            <option value="VISIT" <%= "selected" if (assignment.submission_types == 'VISIT' rescue false) %>><%= t 'options.visit', "VISIT" %></option>
+            <!-- End Empowered Added Options -->
             <option value="quiz" <%= "selected" if (assignment.submission_types == 'online_quiz' rescue false) %>><%= t 'options.quiz', "Quiz" %></option>
             <option value="external_tool" <%= "selected" if (assignment.submission_types == 'external_tool' rescue false) %>><%= t 'options.external_tool', "External Tool" %></option>
             <% if feature_enabled?(:attendance) %>
@@ -168,6 +174,15 @@
           </td>
         <% end %>
       </tr>
+        <!-- More Empowered Stuff -->
+          <tr class="link_content">
+            <td style="width: 10%;"><%= f.blabel :link_url, :en => "URL" %></td>
+            <td colspan="3" id="link_url">
+              <%= f.text_field(:url, :style => "width:75%", :readonly => false) %>
+            </td>
+          </tr>
+
+      <!-- End more Empowered Stuff -->
     <% end %>
     <tr>
       <td style="width: 10%;"><%= f.blabel :title, :en => "Title" %></td>

@@ -306,6 +306,8 @@ class AssignmentsController < ApplicationController
         params[:assignment][:submission_types] = "discussion_topic"
       elsif params[:assignment_type] == "external_tool"
         params[:assignment][:submission_types] = "external_tool"
+      elsif (params[:assignment_type] == "READ" || params[:assignment_type] ==  "WATCH" || params[:assignment_type] == "LISTEN" || params[:assignment_type] == "VISIT")
+        params[:assignment][:submission_types] = params[:assignment_type]
       end
       respond_to do |format|
         @assignment.content_being_saved_by(@current_user)
