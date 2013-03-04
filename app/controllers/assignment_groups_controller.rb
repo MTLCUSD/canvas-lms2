@@ -62,22 +62,59 @@ class AssignmentGroupsController < ApplicationController
   #       "rules" : {...}
   #     }
   #   ]
+  #def index
+  #  @groups = @context.assignment_groups.active
+  #
+  #  params[:include] = Array(params[:include])
+  #  if params[:include].include? 'assignments'
+  #    params[:include] << "discussion_topic"
+  #    @groups = @groups.scoped(:include => { :assignments => [:rubric, :discussion_topic] })
+  #  end
+  #
+  #  if authorized_action(@context.assignment_groups.new, @current_user, :read)
+  #    respond_to do |format|
+  #      format.json {
+  #        json = @groups.map { |g|
+  #          assignment_group_json(g, @current_user, session, params[:include])
+  #        }
+  #        render :json => json
+  #      }
+  #    end
+  #  end
+  #end
+
   def index
     @groups = @context.assignment_groups.active
 
-    params[:include] = Array(params[:include])
-    if params[:include].include? 'assignments'
-      params[:include] << "discussion_topic"
-      @groups = @groups.scoped(:include => { :assignments => [:rubric, :discussion_topic] })
+    include_assignments = Array(params[:include]).include?('assignments')
+    if include_assignments
+      @groups = @groups.scoped(:include => { :assignments => :rubric })
     end
 
     if authorized_action(@context.assignment_groups.new, @current_user, :read)
+
       respond_to do |format|
         format.json {
-          json = @groups.map { |g|
-            assignment_group_json(g, @current_user, session, params[:include])
-          }
-          render :json => json
+          hashes = @groups.map do |group|
+            hash = group.as_json(:include_root => false,
+                                 :only => %w(id name position group_weight))
+            # note that 'rules_hash' gets to_jsoned as just 'rules' because that is what GradeCalculator expects.
+            hash['rules'] = group.rules_hash
+            if include_assignments
+              include_gradable_assignments= Array(params[:include]).include?('gradable_assignments')
+              if include_gradable_assignments
+                ## Do not show READ,WATCH,LISTEN,VISIT... therefore where clause on other types and blank types which means regular assignment.
+                ## actually - just show assignments with points.
+                with_points =  group.assignments.active.where('points_possible > 0')
+                hash['assignments'] = with_points.map { |a| assignment_json(a, @current_user, session) }
+              else
+                hash['assignments'] = group.assignments.active.map { |a| assignment_json(a, @current_user, session) }
+              end
+            end
+            hash
+          end
+          hashes.each { |group| group['group_weight'] = nil } unless @context.apply_group_weights?
+          render :json => hashes.to_json
         }
       end
     end
