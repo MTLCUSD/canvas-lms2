@@ -1,0 +1,8 @@
+development:
+    api: 127.0.0.1/api/
+
+test:
+    api: 127.0.0.1/api/
+
+production:
+    api: 127.0.0.1/api/
