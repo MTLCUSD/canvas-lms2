@@ -130,6 +130,29 @@ module CC::Importer::Standard
     end
 
     FILEBASE_REGEX = /\$IMS[-_]CC[-_]FILEBASE\$/
+
+    def replace_url(url)
+      if url
+        val = URI.unescape(url)
+        begin
+          if val =~ FILEBASE_REGEX
+            val.gsub!(FILEBASE_REGEX, '')
+            if new_url = URI::escape(get_canvas_att_replacement_url(val, resource_dir))
+              node['url'] = new_url
+            end
+          else
+            if ImportedHtmlConverter.relative_url?(val)
+              if new_url = URI::escape(get_canvas_att_replacement_url(val))
+                node['url'] = new_url
+              end
+            end
+          end
+        rescue URI::InvalidURIError
+          Rails.logger.warn "attempting to translate invalid url: #{val}"
+        end
+      end
+    end
+
     def replace_urls(html, resource_dir=nil)
       return "" if html.blank?
 
