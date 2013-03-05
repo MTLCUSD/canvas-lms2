@@ -424,39 +424,44 @@ class Message < ActiveRecord::Base
   def deliver_via_email
     logger.info "Delivering mail: #{self.inspect}"
     res = nil
-    begin
-      res = Mailer.deliver_message(self)
-    rescue Net::SMTPServerBusy => e
-      @exception = e
-      logger.error "Exception: #{e.class}: #{e.message}\n\t#{e.backtrace.join("\n\t")}"
-      if e.message && e.message.match(/Bad recipient/)
-        self.cancel
-      end
-    rescue Timeout::Error => e
-      @exception = e
-      logger.error "Exception: #{e.class}: #{e.message}\n\t#{e.backtrace.join("\n\t")}"
-    rescue => e
-      @exception = e
-      logger.error "Exception: #{e.class}: #{e.message}\n\t#{e.backtrace.join("\n\t")}"
-    end
-    if res
-      complete_dispatch
-    elsif @exception
-      raise_error = @exception.to_s !~ /^450/
-      log_error = raise_error && !@exception.is_a?(Timeout::Error)
-      if log_error
-        ErrorReport.log_exception(:default, @exception, {
-          :message => "Message delivery failed",
-          :to => self.to,
-          :object => self.inspect.to_s,
-        })
-      end
-      self.errored_dispatch
-      if raise_error
-        raise @exception
-      else
-        return false
-      end
+    if Empowered_config[:outgoing_mail_enabled]
+        begin
+          res = Mailer.deliver_message(self)
+        rescue Net::SMTPServerBusy => e
+          @exception = e
+          logger.error "Exception: #{e.class}: #{e.message}\n\t#{e.backtrace.join("\n\t")}"
+          if e.message && e.message.match(/Bad recipient/)
+            self.cancel
+          end
+        rescue Timeout::Error => e
+          @exception = e
+          logger.error "Exception: #{e.class}: #{e.message}\n\t#{e.backtrace.join("\n\t")}"
+        rescue => e
+          @exception = e
+          logger.error "Exception: #{e.class}: #{e.message}\n\t#{e.backtrace.join("\n\t")}"
+        end
+        if res
+          complete_dispatch
+        elsif @exception
+          raise_error = @exception.to_s !~ /^450/
+          log_error = raise_error && !@exception.is_a?(Timeout::Error)
+          if log_error
+            ErrorReport.log_exception(:default, @exception, {
+              :message => "Message delivery failed",
+              :to => self.to,
+              :object => self.inspect.to_s,
+            })
+          end
+          self.errored_dispatch
+          if raise_error
+            raise @exception
+          else
+            return false
+          end
+        end
+    else
+      logger.info "Empowered E-Mail Delivery DISABLED as per #{RAILS_ROOT}/config/empowered.yml"
+      # End Empowered Bypass
     end
     true
   end

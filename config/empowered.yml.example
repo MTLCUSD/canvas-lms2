@@ -1,8 +1,11 @@
 development:
     api: 127.0.0.1/api/
+    outgoing_mail_enabled: false
 
 test:
     api: 127.0.0.1/api/
+    outgoing_mail_enabled: false
 
 production:
     api: 127.0.0.1/api/
+    outgoing_mail_enabled: false

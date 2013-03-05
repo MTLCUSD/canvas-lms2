@@ -48,9 +48,9 @@ class ConversationObserver < ActiveRecord::Observer
   end
   
   def get_api_host()
-    empowered = YAML.load_file("#{RAILS_ROOT}/config/empowered.yml")[RAILS_ENV].symbolize_keys rescue nil
-    if empowered[:api]
-      return empowered[:api]
+    #empowered = YAML.load_file("#{RAILS_ROOT}/config/empowered.yml")[RAILS_ENV].symbolize_keys rescue nil
+    if Empowered_config[:api]
+      return Empowered_config[:api]
     else           
       Rails.logger.info "ERROR: get_api_host not found using yaml."
     end
