@@ -8,8 +8,7 @@ class WikiApiController < ApplicationController
 
 
   def set_up_s3
-    @s3_config ||= YAML.load_file(RAILS_ROOT + "/config/amazon_s3.yml")[RAILS_ENV].symbolize_keys rescue nil
-    AWS::S3::Base.establish_connection!(@s3_config.slice(:access_key_id, :secret_access_key, :server, :port, :use_ssl, :persistent, :proxy))
+    AWS::S3::Base.establish_connection!(Empowered_s3_config.slice(:access_key_id, :secret_access_key, :server, :port, :use_ssl, :persistent, :proxy))
   end
 
   def get_amazon_folder(bucket="account_1")
@@ -21,12 +20,12 @@ class WikiApiController < ApplicationController
     if attachee.respond_to?(:cached_s3_url) && attachee.cached_s3_url
       s3_url = attachee.cached_s3_url
       s3_url = s3_url.match(/#{get_amazon_folder}\/attachments\/\d*/).to_s + "/#{attachee.filename}"
-      s3_url = AWS::S3::S3Object.url_for(s3_url,@s3_config[:bucket_name],:expires_in => 3600 * 24* 365 * 10)
+      s3_url = AWS::S3::S3Object.url_for(s3_url,Empowered_s3_config[:bucket_name],:expires_in => 3600 * 24* 365 * 10)
       #puts "attachee.respond_to?(:cached_s3_url) and s3_url: #{s3_url}"
     elsif attachee.respond_to?(:s3_url)
       s3_url = attachee.s3_url
       s3_url = s3_url.match(/#{get_amazon_folder}\/attachments\/\d*/).to_s + "/#{attachee.filename}"
-      s3_url = AWS::S3::S3Object.url_for(s3_url,@s3_config[:bucket_name],:expires_in => 3600 * 24* 365 * 10)
+      s3_url = AWS::S3::S3Object.url_for(s3_url,Empowered_s3_config[:bucket_name],:expires_in => 3600 * 24* 365 * 10)
       #puts "attachee.respond_to?(:s3_url) and s3_url: #{s3_url}"
     else
       s3_url = "uh oh.. there is not an s3 url that is either cached or available"
