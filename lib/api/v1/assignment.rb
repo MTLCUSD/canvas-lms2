@@ -19,6 +19,8 @@
 module Api::V1::Assignment
   include Api::V1::Json
   include ApplicationHelper
+  include Api::V1::Aws
+
 
   API_ALLOWED_ASSIGNMENT_OUTPUT_FIELDS = {
     :only => %w(
@@ -36,6 +38,8 @@ module Api::V1::Assignment
       external_tool_tag_attributes
       grade_group_students_individually
       group_category_id
+      cached_description
+      cached_url
     )
   }
 
@@ -44,6 +48,34 @@ module Api::V1::Assignment
     hash['course_id'] = assignment.context_id
     hash['name'] = assignment.title
     hash['description'] = api_user_content(hash['description'], @context || assignment.context)
+
+
+    if assignment.submission_types.is_a?(String) and ["READ", "WATCH", "LISTEN", "VISIT", "not_graded"].include?(assignment.submission_types) and request.url.match(/access_token/)
+
+      if assignment.cached_url.nil?
+        url_for_ipad = assignment.url
+        if url_for_ipad.nil?
+          hash['url'] = nil
+        else
+          assignment.cached_url = canvas_url_to_global(url_for_ipad)
+          assignment.save
+          hash['url'] = assignment.cached_url
+        end
+      else
+        hash['url'] = assignment.cached_url
+      end
+
+      if assignment.cached_description.nil?
+        description = description_to_global_urls(assignment.description)
+        assignment.cached_description = description
+        assignment.save
+        hash['description'] = (description.nil? ? nil : description)
+      else
+        hash['description'] = assignment.cached_description
+      end
+    end
+
+
     hash['html_url'] = course_assignment_url(assignment.context_id, assignment)
     hash['muted'] = assignment.muted?
     hash['submission_types'] = assignment.submission_types_array
@@ -155,6 +187,8 @@ module Api::V1::Assignment
     set_custom_field_values
     turnitin_enabled
     turnitin_settings
+    cached_description
+    cached_url
   )
 
   API_ALLOWED_TURNITIN_SETTINGS = %w(

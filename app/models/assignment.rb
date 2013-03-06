@@ -34,8 +34,8 @@ class Assignment < ActiveRecord::Base
     :peer_reviews, :automatic_peer_reviews, :grade_group_students_individually,
     :notify_of_update, :time_zone_edited, :turnitin_enabled, :turnitin_settings,
     :set_custom_field_values, :context, :position, :allowed_extensions,
-    :external_tool_tag_attributes, :freeze_on_copy, :assignment_group_id, :url
-  #, :cached_description, :cached_url
+    :external_tool_tag_attributes, :freeze_on_copy, :assignment_group_id, :url,
+    :cached_description, :cached_url
     
   attr_accessor :original_id, :updating_user, :copying
 
