@@ -57,14 +57,14 @@ describe TextHelper do
       start_datetime = Time.zone.parse("#{Time.zone.now.year}-01-01 12:00:00")
       end_datetime = start_datetime + 2.days
       th.datetime_string(start_datetime, :event, end_datetime).should ==
-        "Jan 1 at 12pm to Jan 3 at 12pm"
+          "Jan 1 at 12pm to Jan 3 at 12pm"
     end
 
     it "should give a same-day range if start and end are on the same day" do
       start_datetime = Time.zone.parse("#{Time.zone.now.year}-01-01 12:00:00")
       end_datetime = start_datetime.advance(:hours => 1)
       th.datetime_string(start_datetime, :event, end_datetime).should ==
-        "Jan 1 from 12pm to  1pm"
+          "Jan 1 from 12pm to  1pm"
     end
 
     it "should include the year if the current year isn't the same" do
@@ -188,7 +188,7 @@ describe TextHelper do
 
     it "should split on multi-byte character boundaries" do
       str = "This\ntext\nhere\n获\nis\nutf-8"
-      
+
       # In ruby 1.8, unicode characters are counted as multiple characters when calculating length.  
       # In ruby 1.9, a unicode character is still 1 character.  It seems to me the proper path here
       # is to allow the counting to take it's course, as the real GOAL of this test is not to 
@@ -272,12 +272,12 @@ describe TextHelper do
     context "i18n" do
       it "should automatically escape Strings" do
         th.mt(:foo, "We **don't** trust the following input: %{input}", :input => "`a` **b** _c_ ![d](e)\n# f\n + g\n - h").
-          should == "We <strong>don&#39;t</strong> trust the following input: `a` **b** _c_ ![d](e) # f + g - h"
+            should == "We <strong>don&#39;t</strong> trust the following input: `a` **b** _c_ ![d](e) # f + g - h"
       end
 
       it "should not escape MarkdownSafeBuffers" do
         th.mt(:foo, "We **do** trust the following input: %{input}", :input => th.markdown_safe("`a` **b** _c_ ![d](e)\n# f\n + g\n - h")).
-          should == <<-HTML.strip
+            should == <<-HTML.strip
 <p>We <strong>do</strong> trust the following input: <code>a</code> <strong>b</strong> <em>c</em> <img src="e" alt="d" /></p>
 
 <h1>f</h1>
@@ -291,15 +291,15 @@ describe TextHelper do
 
       it "should inlinify single paragraphs by default" do
         th.mt(:foo, "**this** is a test").
-          should == "<strong>this</strong> is a test"
+            should == "<strong>this</strong> is a test"
 
         th.mt(:foo, "**this** is another test\n\nwhat will happen?").
-          should == "<p><strong>this</strong> is another test</p>\n\n<p>what will happen?</p>"
+            should == "<p><strong>this</strong> is another test</p>\n\n<p>what will happen?</p>"
       end
 
       it "should not inlinify single paragraphs if :inlinify => :never" do
         th.mt(:foo, "**one** more test", :inlinify => :never).
-          should == "<p><strong>one</strong> more test</p>"
+            should == "<p><strong>one</strong> more test</p>"
       end
 
       it "should allow wrapper with markdown" do
@@ -308,78 +308,111 @@ describe TextHelper do
 Commodo in ham, *short ribs %{name} pastrami* sausage elit sunt dolore eiusmod ut ea proident ribeye.
 
 Ad dolore andouille meatball irure, ham hock tail exercitation minim ribeye sint quis **eu short loin pancetta**.},
-        :name => '<b>test</b>'.html_safe,
-        :wrapper => {
-          '*' => '<span>\1</span>',
-          '**' => '<a>\1</a>',
-        }).should == "<p>Dolore jerky bacon officia t-bone aute magna. Officia corned beef et ut bacon.</p>\n\n<p>Commodo in ham, <span>short ribs <b>test</b> pastrami</span> sausage elit sunt dolore eiusmod ut ea proident ribeye.</p>\n\n<p>Ad dolore andouille meatball irure, ham hock tail exercitation minim ribeye sint quis <a>eu short loin pancetta</a>.</p>"
+              :name => '<b>test</b>'.html_safe,
+              :wrapper => {
+                  '*' => '<span>\1</span>',
+                  '**' => '<a>\1</a>',
+              }).should == "<p>Dolore jerky bacon officia t-bone aute magna. Officia corned beef et ut bacon.</p>\n\n<p>Commodo in ham, <span>short ribs <b>test</b> pastrami</span> sausage elit sunt dolore eiusmod ut ea proident ribeye.</p>\n\n<p>Ad dolore andouille meatball irure, ham hock tail exercitation minim ribeye sint quis <a>eu short loin pancetta</a>.</p>"
       end
 
       it "should inlinify complex single paragraphs" do
         th.mt(:foo, "**this** is a *test*").
-          should == "<strong>this</strong> is a <em>test</em>"
+            should == "<strong>this</strong> is a <em>test</em>"
 
         th.mt(:foo, "*%{button}*", :button => '<button type="submit" />'.html_safe, :wrapper => '<span>\1</span>').
-          should == '<span><button type="submit" /></span>'
+            should == '<span><button type="submit" /></span>'
       end
 
       it "should not inlinify multiple paragraphs" do
         th.mt(:foo, "para1\n\npara2").
-          should == "<p>para1</p>\n\n<p>para2</p>"
+            should == "<p>para1</p>\n\n<p>para2</p>"
       end
     end
   end
 
   it "should strip out invalid utf-8" do
     test_strings = {
-      "hai\xfb" => "hai",
-      "hai\xfb there" => "hai there",
-      "hai\xfba" => "haia",
-      "hai\xfbab" => "haiab",
-      "hai\xfbabc" => "haiabc",
-      "hai\xfbabcd" => "haiabcd"
+        "hai\xfb" => "hai",
+        "hai\xfb there" => "hai there",
+        "hai\xfba" => "haia",
+        "hai\xfbab" => "haiab",
+        "hai\xfbabc" => "haiabc",
+        "hai\xfbabcd" => "haiabcd"
     }
-  
+
     test_strings.each do |input, output|
       input = input.dup.force_encoding("UTF-8") if RUBY_VERSION >= '1.9'
       TextHelper.strip_invalid_utf8(input).should == output
     end
   end
 
-  it "should recursively strip out invalid utf-8" do
-    pending("ruby 1.9 only") if RUBY_VERSION < "1.9.0"
-    qd = %{
+  describe "YAML invalid UTF8 stripping" do
+    before do
+      pending("ruby 1.9 only") if RUBY_VERSION < "1.9"
+    end
+
+    it "should recursively strip out invalid utf-8" do
+      data = YAML.load(%{
+---
+answers:
+- !map:HashWithIndifferentAccess
+  id: 2
+  text: "t\xEAwo"
+  valid_ascii: !binary |
+    oHRleHSg
+      }.strip)
+      answer = data['answers'][0]['text']
+      answer.valid_encoding?.should be_false
+      TextHelper.recursively_strip_invalid_utf8!(data, true)
+      answer.should == "two"
+      answer.encoding.should == Encoding::UTF_8
+      answer.valid_encoding?.should be_true
+
+      # in some edge cases, Syck will return a string as ASCII-8BIT if it's not valid UTF-8
+      # so we added a force_encoding step to recursively_strip_invalid_utf8!
+      ascii = data['answers'][0]['valid_ascii']
+      ascii.should == 'text'
+      ascii.encoding.should == Encoding::UTF_8
+    end
+
+    it "should strip out invalid utf-8 when deserializing a column" do
+      # non-binary invalid utf-8 can't even be inserted into the db in this environment,
+      # so we only test the !binary case here
+      yaml_blob = %{
+---
  answers:
- - !map:HashWithIndifferentAccess
-   weight: 0
-   id: 1
-   text: one
-   migration_id: QUE_1
  - !map:HashWithIndifferentAccess
    weight: 0
    id: 2
    html: ab&ecirc;cd.
-   text: "t\xEAwo"
+   valid_ascii: !binary |
+     oHRleHSg
    migration_id: QUE_2
- - !map:HashWithIndifferentAccess
-   weight: 100
-   id: 4685
-   text: three
-   migration_id: QUE_0_7_6554E77AEBFE42C7B02DAE225141AB51_A2
  question_text: What is the answer
  position: 2
-    }.force_encoding('binary')
-    data = YAML.load(qd)
-    answer = data['answers'][1]['text']
-    answer.valid_encoding?.should be_false
-    TextHelper.recursively_strip_invalid_utf8(data)
-    answer.should == "two"
-    answer.valid_encoding?.should be_true
+      }.force_encoding('binary').strip
+      # now actually insert it into an AR column
+      aq = assessment_question_model
+      AssessmentQuestion.update_all({ :question_data => yaml_blob }, { :id => aq.id })
+      text = aq.reload.question_data['answers'][0]['valid_ascii']
+      text.should == "text"
+      text.encoding.should == Encoding::UTF_8
+    end
 
-    # now check that the method is called on serialized AR columns
-    Account.default.update_attribute(:settings, "test")
-    a = Account.find(Account.default.id)
-    TextHelper.expects(:recursively_strip_invalid_utf8).with({})
-    a.settings # deserialization is lazy, trigger it
+    describe "unserialize_attribute_with_utf8_check" do
+      it "should not strip columns not on the list" do
+        TextHelper.expects(:recursively_strip_invalid_utf8!).never
+        a = Account.find(Account.default.id)
+        a.settings # deserialization is lazy, trigger it
+      end
+
+      it "should strip columns on the list" do
+        TextHelper.unstub(:recursively_strip_invalid_utf8!)
+        aq = assessment_question_model
+        TextHelper.expects(:recursively_strip_invalid_utf8!).with(instance_of(HashWithIndifferentAccess), true)
+        aq = AssessmentQuestion.find(aq)
+        aq.question_data
+      end
+    end
   end
 end
