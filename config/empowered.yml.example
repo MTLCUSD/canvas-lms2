@@ -2,13 +2,16 @@ development:
     api: 127.0.0.1/api/
     outgoing_mail_enabled: false
     old_grade_book_enabled: false
+    root_account: 4
 
 test:
     api: 127.0.0.1/api/
     outgoing_mail_enabled: false
     old_grade_book_enabled: false
+    root_account: 4
 
 production:
     api: 127.0.0.1/api/
     outgoing_mail_enabled: false
     old_grade_book_enabled: false
+    root_account: 4

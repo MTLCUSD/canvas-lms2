@@ -1,0 +1,67 @@
+# NOTE: THIS SCRIPT IS FOR EMPOWERED'S VERSION OF MULTI TENNIT CANVAS
+# CALL ME LIKE THIS FROM THE CANVAS ROOT
+#
+# ./script/runner ./script/create-new-account
+
+@user_id = nil
+
+def create_new_account(name)
+  new_account = Account.new
+  new_account.name = name
+  if new_account.save!
+    new_account.id
+  else
+    false
+  end
+end
+
+def create_new_user(account_id,name)
+  new_user = User.new
+  new_user.name = name
+  new_user.short_name = name
+  new_user.workflow_state = "registered"
+  new_user.save!
+  
+  @user_id = new_user.id
+  new_ps = new_user.pseudonyms.new
+  new_ps.account_id = account_id
+  new_ps.workflow_state = "active"
+  new_ps.user_id = new_user.id
+  new_ps.unique_id = name
+  pass = new_ps.generate_temporary_password
+  new_ps.save!
+  pass
+end
+
+def make_god(user_id,account_id)
+  new_god = AccountUser.new
+  new_god.account_id = account_id
+  new_god.user_id = user_id
+  if new_god.save!
+    new_god.id
+  else
+    false
+  end
+end
+
+puts "Let's Create an Root Account for our new School"
+print "School Name: "
+account_name = gets.chomp
+puts "Createing Account..... #{account_name}"
+account_id = create_new_account(account_name)
+
+puts "Ok, Now lets create an admin for that account"
+print "short admin username: "
+admin_username = gets.chomp
+puts "Creating admin account"
+new_password = create_new_user(account_id,admin_username)
+puts "Now its time to Bless the account as a Admin"
+make_god(@user_id,account_id)
+puts "Account Should now be Blessed"
+
+puts "================================================================="
+puts "Account ID: #{account_id}"
+puts "Account Name: #{account_name}"
+puts "Admin User for Account: #{admin_username}"
+puts "Admin User Password: #{new_password}"
+
