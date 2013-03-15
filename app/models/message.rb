@@ -421,10 +421,26 @@ class Message < ActiveRecord::Base
 
   protected
 
+  #more empowered hacks
+def isTeacher?
+  result = false
+  self.user.enrollments.each do |enrollment|
+    if enrollment.type == "TeacherEnrollment"
+      result = true
+      logger.info "Empowered: Enabled teacher mail deliver for #{self.user.email}"
+    end
+
+  end
+  result
+end
+#oh yah
+
   def deliver_via_email
+    logger.info "Trying to Deliver for user: #{self.user.to_s}, or #{self.to}"
     logger.info "Delivering mail: #{self.inspect}"
     res = nil
-    if Empowered_config[:outgoing_mail_enabled]
+    if Empowered_config[:outgoing_mail_enabled] or isTeacher?
+        logger.info "Empowered: Trying to Deliver now."
         begin
           res = Mailer.deliver_message(self)
         rescue Net::SMTPServerBusy => e
