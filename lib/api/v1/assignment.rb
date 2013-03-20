@@ -40,6 +40,7 @@ module Api::V1::Assignment
       group_category_id
       cached_description
       cached_url
+      url
     )
   }
 
@@ -79,6 +80,11 @@ module Api::V1::Assignment
     hash['html_url'] = course_assignment_url(assignment.context_id, assignment)
     hash['muted'] = assignment.muted?
     hash['submission_types'] = assignment.submission_types_array
+
+    if assignment.quiz
+      hash['anonymous_submissions'] = !!(assignment.quiz.anonymous_submissions)
+      hash['url'] = "/quiz/#{assignment.quiz.id}"
+    end
 
     if assignment.automatic_peer_reviews? && assignment.peer_reviews?
       hash[ 'peer_review_count' ] = assignment.peer_review_count

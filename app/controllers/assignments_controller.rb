@@ -309,6 +309,15 @@ class AssignmentsController < ApplicationController
       elsif (params[:assignment_type] == "READ" || params[:assignment_type] ==  "WATCH" || params[:assignment_type] == "LISTEN" || params[:assignment_type] == "VISIT")
         params[:assignment][:submission_types] = params[:assignment_type]
       end
+
+      # Empowered Madness
+      unless params[:assignment][:url].nil?
+        params[:assignment][:cached_url] = canvas_url_to_global(params[:assignment][:url])
+      end
+
+      params[:assignment][:cached_description] = description_to_global_urls(params[:assignment][:description])
+
+      # End Madness
       respond_to do |format|
         @assignment.content_being_saved_by(@current_user)
         group = get_assignment_group(params[:assignment])
