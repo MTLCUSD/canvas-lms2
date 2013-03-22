@@ -316,7 +316,11 @@ class AssignmentsController < ApplicationController
       end
 
       params[:assignment][:cached_description] = description_to_global_urls(params[:assignment][:description])
-
+      if params[:assignment][:submission_types] == "online_upload"
+        logger.info "Empowered: I'm forcing URL uploads to make my life easer..."
+        params[:assignment][:submission_types] = "online_upload,online_url"
+        params[:online_url]="on"
+      end
       # End Madness
       respond_to do |format|
         @assignment.content_being_saved_by(@current_user)
