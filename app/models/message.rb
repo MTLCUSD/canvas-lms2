@@ -421,63 +421,36 @@ class Message < ActiveRecord::Base
 
   protected
 
-  #more empowered hacks
-def isTeacher?
-  result = false
-  self.user.enrollments.each do |enrollment|
-    if enrollment.type == "TeacherEnrollment"
-      result = true
-      logger.info "Empowered: Enabled teacher mail deliver for #{self.user.email}"
-    end
-
-  end
-  result
-end
-#oh yah
-
   def deliver_via_email
-    logger.info "Trying to Deliver for user: #{self.user.to_s}, or #{self.to}"
     logger.info "Delivering mail: #{self.inspect}"
     res = nil
-    if Empowered_config[:outgoing_mail_enabled] or isTeacher?
-        logger.info "Empowered: Trying to Deliver now."
-        begin
-          res = Mailer.deliver_message(self)
-        rescue Net::SMTPServerBusy => e
-          @exception = e
-          logger.error "Exception: #{e.class}: #{e.message}\n\t#{e.backtrace.join("\n\t")}"
-          if e.message && e.message.match(/Bad recipient/)
-            self.cancel
-          end
-        rescue Timeout::Error => e
-          @exception = e
-          logger.error "Exception: #{e.class}: #{e.message}\n\t#{e.backtrace.join("\n\t")}"
-        rescue => e
-          @exception = e
-          logger.error "Exception: #{e.class}: #{e.message}\n\t#{e.backtrace.join("\n\t")}"
-        end
-        if res
-          complete_dispatch
-        elsif @exception
-          raise_error = @exception.to_s !~ /^450/
-          log_error = raise_error && !@exception.is_a?(Timeout::Error)
-          if log_error
-            ErrorReport.log_exception(:default, @exception, {
-              :message => "Message delivery failed",
-              :to => self.to,
-              :object => self.inspect.to_s,
-            })
-          end
-          self.errored_dispatch
-          if raise_error
-            raise @exception
-          else
-            return false
-          end
-        end
-    else
-      logger.info "Empowered E-Mail Delivery DISABLED as per #{RAILS_ROOT}/config/empowered.yml"
-      # End Empowered Bypass
+    begin
+      res = Mailer.deliver_message(self)
+    rescue Net::SMTPServerBusy => e
+      @exception = e
+      logger.error "Exception: #{e.class}: #{e.message}\n\t#{e.backtrace.join("\n\t")}"
+      if e.message && e.message.match(/Bad recipient/)
+        self.cancel
+      end
+    rescue Timeout::Error => e
+      @exception = e
+      logger.error "Exception: #{e.class}: #{e.message}\n\t#{e.backtrace.join("\n\t")}"
+    rescue => e
+      @exception = e
+      logger.error "Exception: #{e.class}: #{e.message}\n\t#{e.backtrace.join("\n\t")}"
+    end
+    if res
+      complete_dispatch
+    elsif @exception
+      if !@exception.is_a?(Timeout::Error)
+        ErrorReport.log_exception(:default, @exception, {
+            :message => "Message delivery failed",
+            :to => self.to,
+            :object => self.inspect.to_s,
+        })
+      end
+      self.errored_dispatch
+      raise @exception
     end
     true
   end
