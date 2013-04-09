@@ -451,70 +451,135 @@ class Notification < ActiveRecord::Base
     setting[:id] = "cat_#{self.id}_option" if setting
     setting
   end
-  
+  #
+  #def default_frequency(user = nil)
+  #  # user arg is used in plugins
+  #  case category
+  #  when 'All Submissions'
+  #    FREQ_NEVER
+  #  when 'Announcement'
+  #    FREQ_IMMEDIATELY
+  #  when 'Calendar'
+  #    FREQ_NEVER
+  #  when 'Student Appointment Signups'
+  #    FREQ_NEVER
+  #  when 'Appointment Availability'
+  #    FREQ_IMMEDIATELY
+  #  when 'Appointment Signups'
+  #    FREQ_IMMEDIATELY
+  #  when 'Appointment Cancelations'
+  #    FREQ_IMMEDIATELY
+  #  when 'Course Content'
+  #    FREQ_NEVER
+  #  when 'Files'
+  #    FREQ_NEVER
+  #  when 'Discussion'
+  #    FREQ_NEVER
+  #  when 'DiscussionEntry'
+  #    FREQ_DAILY
+  #  when 'Due Date'
+  #    FREQ_WEEKLY
+  #  when 'Grading'
+  #    FREQ_IMMEDIATELY
+  #  when 'Grading Policies'
+  #    FREQ_WEEKLY
+  #  when 'Invitation'
+  #    FREQ_IMMEDIATELY
+  #  when 'Late Grading'
+  #    FREQ_DAILY
+  #  when 'Membership Update'
+  #    FREQ_DAILY
+  #  when 'Other'
+  #    FREQ_DAILY
+  #  when 'Registration'
+  #    FREQ_IMMEDIATELY
+  #  when 'Migration'
+  #    FREQ_IMMEDIATELY
+  #  when 'Submission Comment'
+  #    FREQ_DAILY
+  #  when 'Reminder'
+  #    FREQ_DAILY
+  #  when 'TestImmediately'
+  #    FREQ_IMMEDIATELY
+  #  when 'TestDaily'
+  #    FREQ_DAILY
+  #  when 'TestWeekly'
+  #    FREQ_WEEKLY
+  #  when 'TestNever'
+  #    FREQ_NEVER
+  #  when 'Conversation Message'
+  #    FREQ_IMMEDIATELY
+  #  when 'Added To Conversation'
+  #    FREQ_IMMEDIATELY
+  #  else
+  #    FREQ_DAILY
+  #  end
+  #end
+
   def default_frequency(user = nil)
     # user arg is used in plugins
     case category
-    when 'All Submissions'
-      FREQ_NEVER
-    when 'Announcement'
-      FREQ_IMMEDIATELY
-    when 'Calendar'
-      FREQ_NEVER
-    when 'Student Appointment Signups'
-      FREQ_NEVER
-    when 'Appointment Availability'
-      FREQ_IMMEDIATELY
-    when 'Appointment Signups'
-      FREQ_IMMEDIATELY
-    when 'Appointment Cancelations'
-      FREQ_IMMEDIATELY
-    when 'Course Content'
-      FREQ_NEVER
-    when 'Files'
-      FREQ_NEVER
-    when 'Discussion'
-      FREQ_NEVER
-    when 'DiscussionEntry'
-      FREQ_DAILY
-    when 'Due Date'
-      FREQ_WEEKLY
-    when 'Grading'
-      FREQ_IMMEDIATELY
-    when 'Grading Policies'
-      FREQ_WEEKLY
-    when 'Invitation'
-      FREQ_IMMEDIATELY
-    when 'Late Grading'
-      FREQ_DAILY
-    when 'Membership Update'
-      FREQ_DAILY
-    when 'Other'
-      FREQ_DAILY
-    when 'Registration'
-      FREQ_IMMEDIATELY
-    when 'Migration'
-      FREQ_IMMEDIATELY
-    when 'Submission Comment'
-      FREQ_DAILY
-    when 'Reminder'
-      FREQ_DAILY
-    when 'TestImmediately'
-      FREQ_IMMEDIATELY
-    when 'TestDaily'
-      FREQ_DAILY
-    when 'TestWeekly'
-      FREQ_WEEKLY
-    when 'TestNever'
-      FREQ_NEVER
-    when 'Conversation Message'
-      FREQ_IMMEDIATELY
-    when 'Added To Conversation'
-      FREQ_IMMEDIATELY
-    else
-      FREQ_DAILY
+      when 'All Submissions'
+        FREQ_NEVER
+      when 'Announcement'
+        FREQ_NEVER
+      when 'Calendar'
+        FREQ_NEVER
+      when 'Student Appointment Signups'
+        FREQ_NEVER
+      when 'Appointment Availability'
+        FREQ_NEVER
+      when 'Appointment Signups'
+        FREQ_NEVER
+      when 'Appointment Cancelations'
+        FREQ_NEVER
+      when 'Course Content'
+        FREQ_NEVER
+      when 'Files'
+        FREQ_NEVER
+      when 'Discussion'
+        FREQ_NEVER
+      when 'DiscussionEntry'
+        FREQ_NEVER
+      when 'Due Date'
+        FREQ_NEVER
+      when 'Grading'
+        FREQ_NEVER
+      when 'Grading Policies'
+        FREQ_NEVER
+      when 'Invitation'
+        FREQ_NEVER
+      when 'Late Grading'
+        FREQ_NEVER
+      when 'Membership Update'
+        FREQ_NEVER
+      when 'Other'
+        FREQ_NEVER
+      when 'Registration'
+        FREQ_NEVER
+      when 'Migration'
+        FREQ_NEVER
+      when 'Submission Comment'
+        FREQ_NEVER
+      when 'Reminder'
+        FREQ_NEVER
+      when 'TestImmediately'
+        FREQ_NEVER
+      when 'TestDaily'
+        FREQ_NEVER
+      when 'TestWeekly'
+        FREQ_NEVER
+      when 'TestNever'
+        FREQ_NEVER
+      when 'Conversation Message'
+        FREQ_NEVER
+      when 'Added To Conversation'
+        FREQ_NEVER
+      else
+        FREQ_NEVER
     end
   end
+
   
   # TODO i18n: show the localized notification name in the dashboard (or
   # wherever), even if we continue to store the english string in the db
