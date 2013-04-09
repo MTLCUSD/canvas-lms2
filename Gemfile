@@ -1,6 +1,10 @@
 source 'https://rubygems.org/'
 
 ONE_NINE = RUBY_VERSION >= "1.9."
+# Empowered Required Gems
+  # hpricot is required for wiki_api_controller.rb
+  gem 'hpricot',        '0.8.6'
+#End Empowered Rrequired Gems
 
 gem 'rails',          '2.3.17'
 gem 'authlogic',      '2.1.3'
