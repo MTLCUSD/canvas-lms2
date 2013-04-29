@@ -24,12 +24,14 @@ class ConversationObserver < ActiveRecord::Observer
       begin
         from[:id] = cm.author.id
         from[:email] = User.find(from[:id].to_i).email
+        canvas_account = User.find(from[:id].to_i).account.id        
         body = cm.body
         # group = cm.context
         to = cm.recipients.map { |person| { :id => person.id, :email => User.find(person.id).email }}
         # puts "cm.context : #{cm.context}"
         unless cm.context == "group"
           payload = {
+          	     :account => canvas_account,          
                      :from    => from,
                      :created_at => cm.created_at,
                      :body => body,
