@@ -1,3 +1,4 @@
+<% if @context.is_a?(Group) != true %>
 <%
   @body_classes << 'hide-content-while-scripts-not-loaded'
   content_for :page_title, join_title(t('#titles.announcements', "Announcements"), @context.name)
@@ -22,5 +23,7 @@
          <%= auto_discovery_link_tag(:rss, feeds_announcements_format_path(feed_key, :rss), {:title => t(:podcast_title_group, "Group Announcements Podcast Feed")}) %>
   <%   end
      end %>
+<% end %>
+<% end %>
 <% end %>
 
