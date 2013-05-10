@@ -776,6 +776,10 @@ class Enrollment < ActiveRecord::Base
     self.course.score_to_grade(self.computed_final_score)
   end
 
+  def computed_current_grade
+    self.course.score_to_grade(self.computed_current_score)
+  end
+
   def self.students(opts={})
     with_scope :find => opts do
       find(:all, :conditions => {:type => 'Student'}).map(&:user).compact
