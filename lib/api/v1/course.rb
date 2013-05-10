@@ -51,6 +51,12 @@ module Api::V1::Course
     ["start_at","conclude_at"].each {|date|
       hash[date] = course.send(date.to_sym)
     }
+    has_muted_assignments = false
+    course.assignments.each do |a|
+      if a.muted? == true
+        has_muted_assignments = true
+      end
+    end
     if enrollments
       hash['enrollments'] = enrollments.map do |e|
         h = { :type => e.readable_type.downcase }
@@ -59,7 +65,8 @@ module Api::V1::Course
               :computed_current_score => e.computed_current_score,
               :computed_final_score => e.computed_final_score,
               :computed_final_grade => e.computed_final_grade,
-              :computed_current_grade => e.computed_current_grade)
+              :computed_current_grade => e.computed_current_grade,
+              :has_muted_assignments => has_muted_assignments)
         end
         h
       end
