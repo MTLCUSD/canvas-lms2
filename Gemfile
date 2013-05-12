@@ -1,5 +1,13 @@
 source 'https://rubygems.org/'
 
+# Empowered Required Gems
+
+  # hpricot is required for wiki_api_controller.rb
+  gem 'hpricot',        '0.8.6'
+
+#End Empowered Rrequired Gems
+
+
 ONE_NINE = RUBY_VERSION >= "1.9."
 require File.expand_path("../config/canvas_rails3", __FILE__)
 
@@ -97,9 +105,9 @@ group :mysql do
   gem 'mysql2',       '0.2.18'
 end
 
-group :postgres do
-  gem 'pg',           '0.10.1'
-end
+#group :postgres do
+#  gem 'pg',           '0.10.1'
+#end
 
 group :sqlite do
   gem 'sqlite3-ruby', '1.3.2'
