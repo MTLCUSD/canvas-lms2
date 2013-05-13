@@ -1325,6 +1325,7 @@ class Course < ActiveRecord::Base
 
     posts_to_make.each do |enrollment_ids, res, mime_type|
       begin
+        #Rails.logger.info "OGG: #{res.inspect}"
         posted_enrollment_ids += enrollment_ids
         SSLCommon.post_data(settings[:publish_endpoint], res, mime_type)
         Enrollment.where(:id => enrollment_ids).update_all(:grade_publishing_status => (should_kick_off_grade_publishing_timeout? ? "publishing" : "published"), :grade_publishing_message => nil)
@@ -1339,10 +1340,11 @@ class Course < ActiveRecord::Base
     raise errors[0] if errors.size > 0
   end
 
+  #OGG has modified this to add root_accout_id so that our code can line things up
   def generate_grade_publishing_csv_output(enrollments, publishing_user, publishing_pseudonym)
     enrollment_ids = []
     res = FasterCSV.generate do |csv|
-      row = ["publisher_id", "publisher_sis_id", "course_id", "course_sis_id", "section_id", "section_sis_id", "student_id", "student_sis_id", "enrollment_id", "enrollment_status", "score"]
+      row = ["publisher_id", "publisher_sis_id", "course_id", "course_sis_id", "section_id", "section_sis_id", "student_id", "student_sis_id", "enrollment_id", "enrollment_status", "score", "root_account"]
       row << "grade" if self.grading_standard_enabled?
       csv << row
       enrollments.each do |enrollment|
@@ -1355,7 +1357,7 @@ class Course < ActiveRecord::Base
                  enrollment.course.id, enrollment.course.sis_source_id,
                  enrollment.course_section.id, enrollment.course_section.sis_source_id,
                  enrollment.user.id, pseudonym_sis_id, enrollment.id,
-                 enrollment.workflow_state, enrollment.computed_final_score]
+                 enrollment.workflow_state, enrollment.computed_final_score, self.root_account_id]
           row << enrollment.computed_final_grade if self.grading_standard_enabled?
           csv << row
         end
