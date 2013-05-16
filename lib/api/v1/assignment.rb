@@ -19,7 +19,9 @@
 module Api::V1::Assignment
   include Api::V1::Json
   include ApplicationHelper
+  include Api::V1::Aws #Empowered
 
+  #Empowered removed: grading_standard_id/ added: cached_description, cached_url, url
   API_ALLOWED_ASSIGNMENT_OUTPUT_FIELDS = {
     :only => %w(
       id
@@ -35,7 +37,10 @@ module Api::V1::Assignment
       automatic_peer_reviews
       grade_group_students_individually
       group_category_id
-      grading_standard_id
+      
+      cached_description
+      cached_url
+      url
     )
   }
 
@@ -70,8 +75,43 @@ module Api::V1::Assignment
     # use already generated hash['description'] because it is filtered by
     # Assignment#filter_attributes_for_user when the assignment is locked
     hash['description'] = api_user_content(hash['description'], @context || assignment.context)
+
+    #Empowered stuff
+    if assignment.submission_types.is_a?(String) and ["READ", "WATCH", "LISTEN", "VISIT", "not_graded"].include?(assignment.submission_types) and request.url.match(/access_token/)
+
+      if assignment.cached_url.nil?
+        url_for_ipad = assignment.url
+        if url_for_ipad.nil?
+          hash['url'] = nil
+        else
+          assignment.cached_url = canvas_url_to_global(url_for_ipad)
+          assignment.save
+          hash['url'] = assignment.cached_url
+        end
+      else
+        hash['url'] = assignment.cached_url
+      end
+
+      if assignment.cached_description.nil?
+        description = description_to_global_urls(assignment.description)
+        assignment.cached_description = description
+        assignment.save
+        hash['description'] = (description.nil? ? nil : description)
+      else
+        hash['description'] = assignment.cached_description
+      end
+    end
+    #End Empowered stuff
+
     hash['muted'] = assignment.muted?
     hash['html_url'] = course_assignment_url(assignment.context_id, assignment)
+
+    #Empowered stuff
+    if assignment.quiz
+      hash['anonymous_submissions'] = !!(assignment.quiz.anonymous_submissions)
+      hash['url'] = "/quiz/#{assignment.quiz.id}"
+    end
+    #End Empowered
 
     if assignment.external_tool? && assignment.external_tool_tag.present?
       external_tool_tag = assignment.external_tool_tag
@@ -158,6 +198,7 @@ module Api::V1::Assignment
     settings.slice(*API_ALLOWED_TURNITIN_SETTINGS)
   end
 
+  #Empowered removed: grading_standard_id/ added: cached_description, cached_url
   API_ALLOWED_ASSIGNMENT_INPUT_FIELDS = %w(
     name
     description
@@ -179,9 +220,11 @@ module Api::V1::Assignment
     grade_group_students_individually
     turnitin_enabled
     turnitin_settings
-    grading_standard_id
+    
     freeze_on_copy
     notify_of_update
+    cached_description
+    cached_url
   )
 
   API_ALLOWED_TURNITIN_SETTINGS = %w(
