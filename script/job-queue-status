@@ -1,0 +1,7 @@
+#!/opt/canvas/lms/script/runner
+#./script/runner ./script/job-queue-status
+current_jobs=Delayed::Job.jobs_count('current')
+stranded_jobs=Delayed::Job.jobs_count('strand')
+future_jobs=Delayed::Job.jobs_count('future')
+result = {"current"=>current_jobs, "stranded"=>stranded_jobs, "future"=>future_jobs}
+puts result.to_json
