@@ -21,7 +21,7 @@ module Api::V1::Assignment
   include ApplicationHelper
   include Api::V1::Aws #Empowered
 
-  #Empowered removed: grading_standard_id/ added: cached_description, cached_url, url
+  #Empowered added: cached_description, cached_url, url
   API_ALLOWED_ASSIGNMENT_OUTPUT_FIELDS = {
     :only => %w(
       id
@@ -37,7 +37,7 @@ module Api::V1::Assignment
       automatic_peer_reviews
       grade_group_students_individually
       group_category_id
-      
+      grading_standard_id
       cached_description
       cached_url
       url
@@ -198,7 +198,7 @@ module Api::V1::Assignment
     settings.slice(*API_ALLOWED_TURNITIN_SETTINGS)
   end
 
-  #Empowered removed: grading_standard_id/ added: cached_description, cached_url
+  #Empowered added: cached_description, cached_url
   API_ALLOWED_ASSIGNMENT_INPUT_FIELDS = %w(
     name
     description
@@ -220,7 +220,7 @@ module Api::V1::Assignment
     grade_group_students_individually
     turnitin_enabled
     turnitin_settings
-    
+    grading_standard_id
     freeze_on_copy
     notify_of_update
     cached_description
