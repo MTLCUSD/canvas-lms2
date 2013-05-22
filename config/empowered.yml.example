@@ -3,15 +3,18 @@ development:
     outgoing_mail_enabled: false
     old_grade_book_enabled: false
     root_account: 4
+	esc_token: HMMM_I_HAVE_NO_TOKEN_HELP_ME
 
 test:
     api: 127.0.0.1/api/
     outgoing_mail_enabled: false
     old_grade_book_enabled: false
     root_account: 4
+	esc_token: HMMM_I_HAVE_NO_TOKEN_HELP_ME
 
 production:
     api: 127.0.0.1/api/
     outgoing_mail_enabled: false
     old_grade_book_enabled: false
     root_account: 4
+	esc_token: HMMM_I_HAVE_NO_TOKEN_HELP_ME
