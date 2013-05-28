@@ -562,12 +562,16 @@ class DiscussionTopic < ActiveRecord::Base
   end
 
   def to_atom(opts={})
+    # Empowered: Adding author id to disccusion topics
+    author_id = self.user.present? ? self.user.attributes['id'] : t('#discussion_topic.atom_no_author', "No Author")
     author_name = self.user.present? ? self.user.name : t('#discussion_topic.atom_no_author', "No Author")
     prefix = [self.is_announcement ? t('#titles.announcement', "Announcement") : t('#titles.discussion', "Discussion")]
     prefix << self.context.name if opts[:include_context]
     Atom::Entry.new do |entry|
       entry.title     = [before_label(prefix.to_sentence), self.title].join(" ")
-      entry.authors  << Atom::Person.new(:name => author_name)
+      #entry.authors  << Atom::Person.new(:name => author_name)
+      # Empowered: Adding author id to disccusion topics
+      entry.authors  << Atom::Person.new(:name => author_name, :uri => "http://#{HostUrl.default_host}/api/v1/users/#{author_id}/profile")
       entry.updated   = self.updated_at
       entry.published = self.created_at
       entry.id        = "tag:#{HostUrl.default_host},#{self.created_at.strftime("%Y-%m-%d")}:/discussion_topics/#{self.feed_code}"
