@@ -26,14 +26,15 @@ module Api::V1::Aws
   end
 
   def set_up_s3_SNS
-      unless AWS::S3::Base.connected? then
-        AWS::S3::Base.establish_connection!(Empowered_s3_config.slice(:access_key_id, :secret_access_key, :server, :port, :use_ssl, :persistent, :proxy))
-      end
+    #this will be problematic later
+      #unless AWS::S3::Base.connected? then
+        AWS::S3.new(Empowered_s3_config.slice(:access_key_id, :secret_access_key))
+      #end
     Empowered_s3_config
   end
 
   def set_up_s3
-    AWS::S3::Base.establish_connection!(Empowered_s3_config.slice(:access_key_id, :secret_access_key, :server, :port, :use_ssl, :persistent, :proxy))
+    AWS::S3.new(Empowered_s3_config.slice(:access_key_id, :secret_access_key))
   end
 
   def get_amazon_folder(bucket="account_1")
