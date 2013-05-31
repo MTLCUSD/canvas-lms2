@@ -99,7 +99,8 @@ module Api::V1::Aws
 
   def description_to_global_urls(description)
     unless description.nil? || description == ""
-      h = Hpricot(description)
+      # h = Hpricot(description)
+      h = Nokogiri::HTML description
       h.search('a').each do |this_link|
         #wiki_page[:url] = AWS::S3::S3Objects.url_for('account_1/attachments/434/page5_1.jpg','lms-dev1-empowered-com',:expires_in => 3600 * 24 * 365 * 10)        
         if this_link['href']
@@ -207,7 +208,9 @@ module Api::V1::Aws
         end
       end
       ## END hpricot h.each do
-      return h.to_html
+      # return h.to_html
+      return h.to_xhtml
+      
     else
       return description
     end
