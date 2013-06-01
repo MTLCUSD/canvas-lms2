@@ -1708,7 +1708,9 @@ class Assignment < ActiveRecord::Base
       unless hash['url'].empty?
 
         ##Rails.logger.info("item.description #{item.description}")
-        h = Hpricot(item.description)
+        
+        h = Nokogiri::HTML item.description
+        #h = Hpricot(item.description)
         href = nil
         links = h.search('a')
         links.each do |this_link|
