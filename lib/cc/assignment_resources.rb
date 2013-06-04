@@ -104,6 +104,7 @@ module CC
       end
       node.quiz_identifierref CCHelper.create_key(assignment.quiz) if assignment.quiz
       node.allowed_extensions assignment.allowed_extensions.join(',') unless assignment.allowed_extensions.blank?
+      node.url assignment.url if ['read','watch','listen','visit'].include?(assignment.submission_types.downcase)
       atts = [:points_possible, :min_score, :max_score, :mastery_score, :grading_type,
               :all_day, :submission_types, :position, :turnitin_enabled, :peer_review_count,
               :peer_reviews_assigned, :peer_reviews, :automatic_peer_reviews,
@@ -111,6 +112,7 @@ module CC
       atts.each do |att|
         node.tag!(att, assignment.send(att)) if assignment.send(att) == false || !assignment.send(att).blank?
       end
+      Rails.logger.debug("if ['read','watch','listen','visit'].include?(assignment.submission_types.downcase) : #{['read','watch','listen','visit'].include?(assignment.submission_types.downcase)}")
       if assignment.external_tool_tag
         node.external_tool_url assignment.external_tool_tag.url 
         node.external_tool_new_tab assignment.external_tool_tag.new_tab
