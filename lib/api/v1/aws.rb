@@ -210,7 +210,7 @@ module Api::V1::Aws
       end
       ## END hpricot h.each do
       # return h.to_html
-      return h.to_xhtml
+      return h.to_html
       
     else
       return description
