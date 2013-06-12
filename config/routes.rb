@@ -961,7 +961,8 @@ ActionController::Routing::Routes.draw do |map|
       groups.resources :groups, :except => [:index]
       groups.get 'users/self/groups', :action => :index, :path_name => "current_user_groups"
       groups.get 'accounts/:account_id/groups', :action => :context_index, :path_name => 'account_user_groups'
-      groups.get 'courses/:course_id/groups', :action => :context_index, :path_name => 'course_user_groups'
+      #Empowered: commented out since we seem to be using our own controller for this
+      #groups.get 'courses/:course_id/groups', :action => :context_index, :path_name => 'course_user_groups'
       groups.get 'groups/:group_id/users', :action => :users, :path_name => 'group_users'
       groups.post 'groups/:group_id/invite', :action => :invite
       groups.post 'groups/:group_id/files', :action => :create_file
@@ -1007,6 +1008,24 @@ ActionController::Routing::Routes.draw do |map|
       search.get 'search/rubrics', :action => 'rubrics', :path_name => 'search_rubrics'
       search.get 'search/recipients', :action => 'recipients', :path_name => 'search_recipients'
     end
+
+    # Empowered: Quiz, Wiki and Groups
+    api.with_options(:controller => :quiz_api) do |quiz|
+      quiz.post 'quiz/:quiz_id', :action  => :save_quiz_as_student, :path_name => 'quiz_save_as_student'
+      quiz.post 'quiz_backup/:quiz_id', :action  => :backup, :path_name => 'backup'
+      quiz.get 'quiz_submissions/:quiz_id', :action  => :show_past_quizzes, :path_name => 'show_quiz'
+      quiz.get 'quiz/:quiz_id', :action  => :show_quiz, :path_name => 'show_quiz'
+    end
+
+    api.with_options(:controller => :wiki_api) do |wiki|
+      wiki.get 'wiki/:wiki_id', :action  => :generate, :path_name => 'generate'
+    end
+
+    api.with_options(:controller => :groups_api) do |group|
+      group.get 'courses/:course_id/groups', :action  => :get_course_student_groups
+    end
+
+    # End Empowered
 
     api.post 'files/:id/create_success', :controller => :files, :action => :api_create_success, :path_name => 'files_create_success'
     api.get 'files/:id/create_success', :controller => :files, :action => :api_create_success, :path_name => 'files_create_success'
