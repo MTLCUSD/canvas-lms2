@@ -683,6 +683,13 @@ ActionController::Routing::Routes.draw do |map|
       courses.get  'courses/:course_id/folders/:id', :controller => :folders, :action => :show, :path_name => 'course_folder'
       courses.put  'accounts/:account_id/courses', :action => :batch_update
     end
+    
+    # More Empowered API's
+    api.with_options(:controller => :manifest_api) do |manifest|
+      manifest.get 'manifest/:manifest_id', :action  => :generate, :path_name => 'generate'
+      manifest.get 'manifest_careers/:manifest_id', :action => :generate_stages
+    end
+    # END Empowered API'S
 
     api.with_options(:controller => :tabs) do |tabs|
       tabs.get "courses/:course_id/tabs", :action => :index, :path_name => 'course_tabs'
