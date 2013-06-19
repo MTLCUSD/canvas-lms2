@@ -21,6 +21,18 @@
         <option value="external_tool" {{selectedIf submissionType "external_tool"}}>
           {{#t "submission_types.external_tool"}}External Tool{{/t}}
         </option>
+        <option value="READ" {{selectedIf submissionType "read"}}>
+          {{#t "submission_types.read"}}READ{{/t}}
+        </option>
+        <option value="WATCH" {{selectedIf submissionType "watch"}}>
+          {{#t "submission_types.watch"}}WATCH{{/t}}
+        </option>
+        <option value="LISTEN" {{selectedIf submissionType "listen"}}>
+          {{#t "submission_types.listen"}}LISTEN{{/t}}
+        </option>
+        <option value="VISIT" {{selectedIf submissionType "visit"}}>
+          {{#t "submission_types.visit"}}VISIT{{/t}}
+        </option>
       </select>
     </div>
   </div>
