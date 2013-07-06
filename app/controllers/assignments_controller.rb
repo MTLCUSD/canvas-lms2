@@ -351,24 +351,7 @@ class AssignmentsController < ApplicationController
         params[:assignment][:submission_types] = "discussion_topic"
       elsif params[:assignment_type] == "external_tool"
         params[:assignment][:submission_types] = "external_tool"
-      # Empowered Madness
-      elsif (params[:assignment_type] == "READ" || params[:assignment_type] ==  "WATCH" || params[:assignment_type] == "LISTEN" || params[:assignment_type] == "VISIT")
-        params[:assignment][:submission_types] = params[:assignment_type]
-      #End Madness
       end
-
-      # Empowered Madness
-      unless params[:assignment][:url].nil?
-        params[:assignment][:cached_url] = canvas_url_to_global(params[:assignment][:url])
-      end
-
-      params[:assignment][:cached_description] = description_to_global_urls(params[:assignment][:description])
-      if params[:assignment][:submission_types] == "online_upload"
-        logger.info "Empowered: I'm forcing URL uploads to make my life easer..."
-        params[:assignment][:submission_types] = "online_upload,online_url"
-        params[:online_url]="on"
-      end
-      # End Madness
       
       respond_to do |format|
         @assignment.content_being_saved_by(@current_user)
