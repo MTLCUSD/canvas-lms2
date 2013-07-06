@@ -97,6 +97,8 @@ module Api::V1::Assignment
         assignment.cached_description = description
         assignment.save
         hash['description'] = (description.nil? ? nil : description)
+      elsif assignment.description != assignment.cached_description
+        assignment.description = assignment.cached_description
       else
         hash['description'] = assignment.cached_description
       end
