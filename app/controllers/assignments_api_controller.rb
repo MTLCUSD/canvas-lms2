@@ -417,7 +417,9 @@ class AssignmentsApiController < ApplicationController
   # @returns Assignment
   def update
     @assignment = @context.assignments.find(params[:id])
-
+  #Empowered
+    params[:assignment][:cached_description] = description_to_global_urls(params[:assignment][:description])
+  #Empowered end
     if authorized_action(@assignment, @current_user, :update)
       save_and_render_response
     end
