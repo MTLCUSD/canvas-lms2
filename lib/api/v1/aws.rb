@@ -53,8 +53,13 @@ module Api::V1::Aws
     url
   end
 
+  ## this method takes an asset as a parameter
+  ## and returns (from s3) a corresponding link url
+  ##
+  ##
+
   def canvas_url_to_global(link_asset)
-    return link_asset if link_asset == "" or link_asset.nil?
+    return link_asset if link_asset.blank?
     set_up_s3
     url = link_asset
     link_asset = link_asset.gsub(/\/courses\/\d*\/(files|file_contents)\/\d*\/preview/) do |attachment|
@@ -99,7 +104,7 @@ module Api::V1::Aws
   end
 
   def description_to_global_urls(description)
-    unless description.nil? || description == ""
+    unless description.blank?
       # h = Hpricot(description)
       h = Nokogiri::HTML description
       h.search('a').each do |this_link|
@@ -210,7 +215,7 @@ module Api::V1::Aws
       end
       ## END hpricot h.each do
       # return h.to_html
-      return h.to_xhtml
+      return h.xpath('/html/body').inner_html
       
     else
       return description
