@@ -23,7 +23,7 @@ define [
     isNotGraded: => @_hasOnlyType 'not_graded'
     isAssignment: =>
       ! _.include @_submissionTypes(), 'online_quiz', 'discussion_topic',
-        'not_graded', 'external_tool'
+        'not_graded', 'external_tool', 'read', 'watch', 'listen', 'visit'
 
     assignmentType: ( type ) =>
       return @_getAssignmentType() unless arguments.length > 0
@@ -87,6 +87,10 @@ define [
       if _.include(submissionTypes, 'none') || submissionTypes.length == 0 then 'none'
       else if _.include submissionTypes, 'on_paper' then 'on_paper'
       else if _.include submissionTypes, 'external_tool' then 'external_tool'
+      else if _.include submissionTypes, 'READ' then 'read'
+      else if _.include submissionTypes, 'WATCH' then 'watch'
+      else if _.include submissionTypes, 'LISTEN' then 'listen'
+      else if _.include submissionTypes, 'VISIT' then 'visit'
       else 'online'
 
     acceptsOnlineUpload: =>
