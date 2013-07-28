@@ -419,6 +419,7 @@ class AssignmentsApiController < ApplicationController
     @assignment = @context.assignments.find(params[:id])
   #Empowered
     params[:assignment][:cached_description] = description_to_global_urls(params[:assignment][:description])
+    params[:assignment][:cached_url] = canvas_url_to_global(params[:assignment][:url])
   #Empowered end
     if authorized_action(@assignment, @current_user, :update)
       save_and_render_response

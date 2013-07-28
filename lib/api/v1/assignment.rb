@@ -200,7 +200,7 @@ module Api::V1::Assignment
     settings.slice(*API_ALLOWED_TURNITIN_SETTINGS)
   end
 
-  #Empowered added: cached_description, cached_url
+  #Empowered added: cached_description, cached_url and url
   API_ALLOWED_ASSIGNMENT_INPUT_FIELDS = %w(
     name
     description
@@ -227,6 +227,7 @@ module Api::V1::Assignment
     notify_of_update
     cached_description
     cached_url
+    url
   )
 
   API_ALLOWED_TURNITIN_SETTINGS = %w(
@@ -241,6 +242,7 @@ module Api::V1::Assignment
   )
 
   def update_api_assignment(assignment, assignment_params)
+
     return nil unless assignment_params.is_a?(Hash)
 
     old_assignment = assignment.new_record? ? nil : assignment.clone
@@ -268,7 +270,8 @@ module Api::V1::Assignment
 
   def update_from_params(assignment, assignment_params)
     update_params = assignment_params.slice(*API_ALLOWED_ASSIGNMENT_INPUT_FIELDS)
-
+    
+    
     if update_params.has_key?('peer_reviews_assign_at')
       update_params['peer_reviews_due_at'] = update_params['peer_reviews_assign_at']
     end

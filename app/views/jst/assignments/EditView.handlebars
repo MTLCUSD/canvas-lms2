@@ -18,6 +18,22 @@
   </div>
 </div>
 
+{{!Empowered}}
+<div class="control-group">
+  <div>
+    <input id="assignment_url"
+      name="url"
+      placeholder="{{#t "assignment_url"}}Assignment URL{{/t}}"
+      aria-label="{{#t "assignment_url"}}Assignment URL{{/t}}"
+      value="{{url}}"
+      type="text"
+      maxlength="254"
+      class="input-block-level"
+      {{disabledIfIncludes frozenAttributes "url"}}/>
+  </div>
+</div>
+{{!End Empowered}}
+
 <div class="control-group">
   {{#ifIncludes frozenAttributes "description"}}
     <div class="frozen-description user_content">
@@ -38,7 +54,6 @@
       {{convertApiUserContent description forEditing=1}}
     </textarea>
   {{/ifIncludes}}
-
 </div>
 
 <div class="control-group">
