@@ -844,6 +844,13 @@ FakeRails3Routes.draw do
       put  'accounts/:account_id/courses', :action => :batch_update
     end
 
+    #Empowered
+    scope(:controller => :manifest_api) do
+      get 'manifest/:manifest_id', :action  => :generate, :path_name => 'generate'
+      get 'manifest_careers/:manifest_id', :action => :generate_stages
+    end
+    #Empowered end
+
     scope(:controller => :tabs) do
       get "courses/:course_id/tabs", :action => :index, :path_name => 'course_tabs'
       get "groups/:group_id/tabs", :action => :index, :path_name => 'group_tabs'
