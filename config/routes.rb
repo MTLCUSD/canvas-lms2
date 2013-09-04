@@ -845,10 +845,16 @@ FakeRails3Routes.draw do
     end
 
     #Empowered
+
     scope(:controller => :manifest_api) do
       get 'manifest/:manifest_id', :action  => :generate, :path_name => 'generate'
       get 'manifest_careers/:manifest_id', :action => :generate_stages
     end
+
+    scope(:controller => :groups_api) do
+      get 'courses/:course_id/groups', :action  => :get_course_student_groups
+    end
+
     #Empowered end
 
     scope(:controller => :tabs) do
@@ -1152,7 +1158,8 @@ FakeRails3Routes.draw do
       resources :groups, :except => [:index]
       get 'users/self/groups', :action => :index, :path_name => "current_user_groups"
       get 'accounts/:account_id/groups', :action => :context_index, :path_name => 'account_user_groups'
-      get 'courses/:course_id/groups', :action => :context_index, :path_name => 'course_user_groups'
+      #Empowered: we have our own controller for this
+      #get 'courses/:course_id/groups', :action => :context_index, :path_name => 'course_user_groups'
       get 'groups/:group_id/users', :action => :users, :path_name => 'group_users'
       post 'groups/:group_id/invite', :action => :invite
       post 'groups/:group_id/files', :action => :create_file
