@@ -846,6 +846,13 @@ FakeRails3Routes.draw do
 
     #Empowered
 
+    scope(:controller => :quiz_api) do
+      post 'quiz/:quiz_id', :action  => :save_quiz_as_student, :path_name => 'quiz_save_as_student'
+      post 'quiz_backup/:quiz_id', :action  => :backup, :path_name => 'backup'
+      get 'quiz_submissions/:quiz_id', :action  => :show_past_quizzes, :path_name => 'show_quiz'
+      get 'quiz/:quiz_id', :action  => :show_quiz, :path_name => 'show_quiz'
+    end
+
     scope(:controller => :manifest_api) do
       get 'manifest/:manifest_id', :action  => :generate, :path_name => 'generate'
       get 'manifest_careers/:manifest_id', :action => :generate_stages
