@@ -842,6 +842,9 @@ FakeRails3Routes.draw do
       post 'courses/:course_id/folders', :controller => :folders, :action => :create
       get  'courses/:course_id/folders/:id', :controller => :folders, :action => :show, :path_name => 'course_folder'
       put  'accounts/:account_id/courses', :action => :batch_update
+      #Empowered 
+      get 'courses/:course_id/wikis', :controller => :wiki_api, :action => :show_course_wikis
+      #Empowered end
     end
 
     #Empowered
@@ -851,6 +854,10 @@ FakeRails3Routes.draw do
       post 'quiz_backup/:quiz_id', :action  => :backup, :path_name => 'backup'
       get 'quiz_submissions/:quiz_id', :action  => :show_past_quizzes, :path_name => 'show_quiz'
       get 'quiz/:quiz_id', :action  => :show_quiz, :path_name => 'show_quiz'
+    end
+
+    scope(:controller => :wiki_api) do
+      get 'wiki/:wiki_id', :action  => :generate, :path_name => 'generate'
     end
 
     scope(:controller => :manifest_api) do
