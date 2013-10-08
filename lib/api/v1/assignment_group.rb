@@ -65,6 +65,54 @@ module Api::V1::AssignmentGroup
     hash
   end
 
+#Empowered: custom method for showing gradable assignments
+  def gradable_assignment_group_json(group, user, session, includes = [], opts = {})
+    includes ||= []
+    opts.reverse_merge! override_assignment_dates: true
+
+    hash = api_json(group, user, session,
+                    :only => %w(id name position group_weight))
+    hash['rules'] = group.rules_hash
+
+    if includes.include?('assignments')
+      assignment_scope = group.active_assignments
+      include_gradable_assignments= Array(params[:include]).include?('gradable_assignments')
+        if include_gradable_assignments
+          ## show assignments with points.
+          with_points = group.assignments.active.where('points_possible > 0')
+          hash['assignments'] = with_points.map { |a| assignment_json(a, @current_user, session) }
+        else
+          ## default code
+        
+        # fake assignment used for checking if the @current_user can read unpublished assignments
+        fake = group.context.assignments.new
+        fake.workflow_state = 'unpublished'
+          if @domain_root_account.enable_draft? && !fake.grants_right?(user, session, :read)
+            # user should not see unpublished assignments
+            assignment_scope = assignment_scope.published
+          end
+        include_discussion_topic = includes.include?('discussion_topic')
+        user_content_attachments   = opts[:preloaded_user_content_attachments]
+        user_content_attachments ||= api_bulk_load_user_content_attachments(
+          assignment_scope.map(&:description),
+          group.context,
+          user
+        )
+        hash['assignments'] = assignment_scope.map { |a|
+          a.context = group.context
+          assignment_json(a, user, session,
+            include_discussion_topic: include_discussion_topic,
+            override_dates: opts[:override_assignment_dates],
+            preloaded_user_content_attachments: user_content_attachments)
+        }
+      end
+    end
+
+    hash
+  end
+
+  #End Empowered
+
   def update_assignment_group(assignment_group, params)
     return nil unless params.is_a?(Hash)
 

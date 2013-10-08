@@ -96,7 +96,8 @@ class AssignmentGroupsController < ApplicationController
         format.json {
           json = @groups.map { |g|
             g.context = @context
-            assignment_group_json(g, @current_user, session, params[:include],
+    #Empowered: added empowered's custom gradable_assignment_group_json method 
+            gradable_assignment_group_json(g, @current_user, session, params[:include],
                                   override_assignment_dates: override_dates,
                                   preloaded_user_content_attachments: user_content_attachments)
           }
