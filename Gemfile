@@ -4,7 +4,9 @@
 source "https://rubygems.org"
 
 # Empowered Required Gems
-gem 'celluloid', '0.11.1'
+gem 'celluloid', '0.10.0'
+gem 'fiber'
+
   # hpricot is required for wiki_api_controller.rb
   gem 'hpricot',        '0.8.6'
 
