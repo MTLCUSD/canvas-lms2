@@ -119,7 +119,7 @@ group :development do
   gem 'rb-fchange', :require => false
 
   if ONE_NINE
-    gem 'debugger',     '1.1.3'
+    gem 'debugger',     '1.6.2'
   else
     gem 'ruby-debug',   '0.10.4'
   end
