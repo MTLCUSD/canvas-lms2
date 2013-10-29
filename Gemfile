@@ -6,8 +6,24 @@ end
 
 require File.expand_path("../config/canvas_rails3", __FILE__)
 
-gem 'rails',        '3.0.20'
-gem 'authlogic',    '3.2.0'
+if CANVAS_RAILS3
+  # 3.0.20 is transitional, we will be on 3.2.x before support is complete
+  # that's also why some gems below have to be downgraded, 3.0.20 relies on old versions of some gems
+  # just to be clear, Canvas is NOT READY to run under Rails 3 in production
+  gem 'rails',        '3.0.20'
+  gem 'authlogic',    '3.2.0'
+else
+  # If you have a license to rails lts, you can create a vendor/plugins/*/RAILS_LTS yaml file
+  # with the Gemfile `gem` command to use (pointing to the private repo with your username/password).
+  # Otherwise, the free community version of rails lts will be used.
+  lts_file = Dir.glob(File.expand_path("../vendor/plugins/*/RAILS_LTS", __FILE__)).first
+  if lts_file
+    eval(File.read(lts_file))
+  else
+    gem 'rails', :git => 'https://github.com/makandra/rails.git', :branch => '2-3-lts', :ref => 'e86daf8ff727d5efc0040c876ba00c9444a5d915'
+  end
+  gem 'authlogic',    '2.1.3'
+end
 
 gem "aws-sdk",        '1.8.3.1'
 gem 'barby',          '0.5.0'
@@ -21,8 +37,7 @@ gem 'diff-lcs',       '1.1.3',  :require => 'diff/lcs'
 if !CANVAS_RAILS3
   gem 'encrypted_cookie_store-instructure', '1.0.4', :require => 'encrypted_cookie_store'
 end
-gem 'erubis',"= 2.6.6"
-#gem 'erubis',         CANVAS_RAILS3 ? '2.6.6' : '2.7.0'
+gem 'erubis',         CANVAS_RAILS3 ? '2.6.6' : '2.7.0'
 if !CANVAS_RAILS3
   gem 'fake_arel',          '1.0.0'
 end
@@ -32,8 +47,7 @@ gem 'hairtrigger',    '0.2.3'
 gem 'sass',           '3.2.3'
 gem 'hashery',        '1.3.0',  :require => 'hashery/dictionary'
 gem 'highline',       '1.6.1'
-gem 'i18n','= 0.5.0'
-#gem 'i18n',           CANVAS_RAILS3 ? '0.5.0' : '0.6.0'
+gem 'i18n',           CANVAS_RAILS3 ? '0.5.0' : '0.6.0'
 if !CANVAS_RAILS3
   gem 'i18nema',        '0.0.7'
 end
@@ -43,8 +57,7 @@ gem 'json',           '1.8.0'
 # native xml parsing, diigo
 gem 'libxml-ruby',    '2.6.0',  :require => 'xml/libxml'
 gem 'macaddr',        '1.0.0'  # macaddr 1.2.0 tries to require 'systemu' which isn't a dependency
-#gem 'mail', CANVAS_RAILS3 ? '2.2.19' : '2.5.3'
-gem 'mail','= 2.2.19'
+gem 'mail', CANVAS_RAILS3 ? '2.2.19' : '2.5.3'
 # using this forked gem until https://github.com/37signals/marginalia/pull/15 is in the source gem
 gem 'instructure-marginalia',     '1.1.3',    :require => false
 gem 'mime-types',     '1.17.2',   :require => 'mime/types'
@@ -55,8 +68,7 @@ gem 'netaddr',        '1.5.0'
 gem 'nokogiri',       '1.5.6'
 # oauth gem, with rails3 fixes rolled in
 gem 'oauth-instructure', '0.4.9', :require => 'oauth'
-gem 'rack','= 1.2.5'
-#gem 'rack',           CANVAS_RAILS3 ? '1.2.5' : '1.1.3'
+gem 'rack',           CANVAS_RAILS3 ? '1.2.5' : '1.1.3'
 gem 'rake',           '10.1.0'
 gem 'rdoc',           '3.12'
 gem 'ratom-instructure', '0.6.9', :require => "atom" # custom gem until necessary changes are merged into mainstream
