@@ -21,7 +21,8 @@ gem 'diff-lcs',       '1.1.3',  :require => 'diff/lcs'
 if !CANVAS_RAILS3
   gem 'encrypted_cookie_store-instructure', '1.0.4', :require => 'encrypted_cookie_store'
 end
-gem 'erubis',         CANVAS_RAILS3 ? '2.6.6' : '2.7.0'
+gem 'erubis',"= 2.6.6"
+#gem 'erubis',         CANVAS_RAILS3 ? '2.6.6' : '2.7.0'
 if !CANVAS_RAILS3
   gem 'fake_arel',          '1.0.0'
 end
