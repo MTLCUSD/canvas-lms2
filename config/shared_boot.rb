@@ -54,7 +54,7 @@ end
 #config.active_record.observers = [:cacher, :stream_item_cache]
 
 if File.exist? ("#{RAILS_ROOT}/config/observer_config.json")
-  include_conversation_observer = JSON.parse(File.open("#{RAILS_ROOT}/config/observer_config.json"))
+  include_conversation_observer = JSON.parse(File.read("#{RAILS_ROOT}/config/observer_config.json"))
   sym_include_conversation_observer = []
   include_conversation_observer.each {|s| sym_include_conversation_observer.push s.to_sym }
   config.active_record.observers = sym_include_conversation_observer
