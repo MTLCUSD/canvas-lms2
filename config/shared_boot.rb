@@ -55,7 +55,7 @@ end
 
 if File.exist? ('#{RAILS_ROOT}/config/observer_config.json')
   include_conversation_observer = JSON.parse(File.open('#{RAILS_ROOT}/config/observer_config.json'))
-  config.active_record.observers = include_converstation_observer.observers
+  config.active_record.observers = include_conversation_observer.observers
 else
   config.active_record.observers = [:cacher, :stream_item_cache]
 end
