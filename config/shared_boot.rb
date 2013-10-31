@@ -50,9 +50,16 @@ end
 
 # Activate observers that should always be running
 
-#Empowered: added converstation observer
+#Empowered: adding converstation observer (if file exists)
 #config.active_record.observers = [:cacher, :stream_item_cache]
-config.active_record.observers = [:cacher, :stream_item_cache, :conversation_observer]
+
+if File.exist? ('observer_config.json')
+  duh = JSON.parse(File.open('observer_config.json'))
+  config.active_record.observers = duh.observers
+else
+  config.active_record.observers = [:cacher, :stream_item_cache]
+end
+
 
 config.autoload_paths += %W(#{Rails.root}/app/middleware
                             #{Rails.root}/app/observers
