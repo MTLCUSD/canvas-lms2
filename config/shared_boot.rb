@@ -53,9 +53,9 @@ end
 #Empowered: adding converstation observer (if file exists)
 #config.active_record.observers = [:cacher, :stream_item_cache]
 
-if File.exist? ('observer_config.json')
-  duh = JSON.parse(File.open('observer_config.json'))
-  config.active_record.observers = duh.observers
+if File.exist? ('#{RAILS_ROOT}/config/observer_config.json')
+  include_conversation_observer = JSON.parse(File.open('#{RAILS_ROOT}/config/observer_config.json'))
+  config.active_record.observers = include_converstation_observer.observers
 else
   config.active_record.observers = [:cacher, :stream_item_cache]
 end
