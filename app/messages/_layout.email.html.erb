@@ -33,14 +33,18 @@
             <td height="10"></td>
           </tr>
           <tr>
-            <td style="padding: 0; border-collapse: collapse;">
-              <table cellpadding="0" cellspacing="0" align="center" border="0">
-                <tr style="font-size: 11px; color: #a8b9c6; font-family: 'Open Sans', 'Lucida Grande', 'Segoe UI', Arial, Verdana, 'Lucida Sans Unicode', Tahoma, 'Sans Serif';" valign="top">
-                  <td width="400" align="left"><a href="<%= "#{HostUrl.protocol}://#{primary_host}/profile/communication" %>" style="color: #555555;">
-                    <%= t 'click_to_preferences', "Click here to edit your notification preferences" %></a></td>
-                  <td width="128" align="right">&#169; <%= Time.now.year %> Instructure</td>
-                </tr>
-              </table>
+          <td style="padding: 0; border-collapse: collapse;">
+            <table cellpadding="0" cellspacing="0" align="center" border="0">
+              <tr style="font-size: 11px; color: #a8b9c6; font-family: 'Open Sans', 'Lucida Grande', 'Segoe UI', Arial, Verdana, 'Lucida Sans Unicode', Tahoma, 'Sans Serif';" valign="top">
+                <td width="454"><a href="<%= "#{HostUrl.protocol}://#{primary_host}/profile/communication" %>" style="color: #555555;">
+                  <%= t 'click_to_preferences', "Click here to edit your notification preferences" %></a>
+			  	</td>
+              </tr>
+			  <tr>
+               <td width="454"><font color="red">Do not reply to this message. Please contact support@empoweredu.com if you have any questions. This mailbox is unmonitored.</font>
+			   </td>
+              </tr>
+            </table>
             </td>
           </tr>
         </table>
