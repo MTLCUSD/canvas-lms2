@@ -15,8 +15,15 @@ set -e
 if [ "$(id -u)" == "0" ]; then
   if [ -f /etc/profile.d/rbenv.sh ]; then
         echo "Using rbenv"
-        exec su $(stat -c %U $(dirname $(readlink -f $0))/../config/environment.rb) -c "/bin/bash -c 'source /etc/profile.d/rbenv.sh && $0 $@'"
-        exit -1;
+		
+		if [ -f  /etc/profile.d/canvas-enviroment.sh ]; then
+			echo "Using /etc/profile.d/canvas-enviroment.sh"
+        	exec su $(stat -c %U $(dirname $(readlink -f $0))/../config/environment.rb) -c "/bin/bash -c 'source /etc/profile.d/canvas-enviroment.sh && source /etc/profile.d/rbenv.sh && $0 $@'"
+        	exit -1;
+		else
+        	exec su $(stat -c %U $(dirname $(readlink -f $0))/../config/environment.rb) -c "/bin/bash -c 'source /etc/profile.d/rbenv.sh && $0 $@'"
+        	exit -1;
+		fi
   else
         exec su $(stat -c %U $(dirname $(readlink -f $0))/../config/environment.rb) -c "/bin/bash $0 $@"
         exit -1;
