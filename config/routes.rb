@@ -856,6 +856,10 @@ FakeRails3Routes.draw do
       get 'quiz/:quiz_id', :action  => :show_quiz, :path_name => 'show_quiz'
     end
 
+    scope(:controller => :empowered_quiz_api) do
+      get 'empowered_api/quiz_show_extra_attempts', :action => :quiz_show_extra_attempts, :path_name => 'empowered_quiz_api'
+    end
+
     scope(:controller => :wiki_api) do
       get 'wiki/:wiki_id', :action  => :generate, :path_name => 'generate'
     end
