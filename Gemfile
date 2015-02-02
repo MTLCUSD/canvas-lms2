@@ -2,6 +2,7 @@
 # Seems rubygems is moving to SSL only in the futrue so we are adding
 # This so we dont get a stupid alert everytime we use bundler
 source "https://rubygems.org"
+gem 'activerecord-mysql2-adapter'
 
 # Empowered Required Gems
 gem 'celluloid', '0.10.0'
@@ -43,7 +44,7 @@ gem 'icalendar',      '1.1.5'
 gem 'jammit',         '0.6.0'
 gem 'json',           '1.5.5'
 # native xml parsing, diigo
-gem 'libxml-ruby',    '2.3.2',  :require => 'xml/libxml'
+gem 'libxml-ruby',    '2.6.0',  :require => 'xml/libxml'
 gem 'macaddr',        '1.0.0'  # macaddr 1.2.0 tries to require 'systemu' which isn't a dependency
 if !ONE_NINE
   # mail gem v2.5.* introduces a failure on 1.8 with bad unicode in headers
@@ -123,7 +124,7 @@ group :development do
   gem 'rb-fchange', :require => false
 
   if ONE_NINE
-    gem 'debugger',     '1.1.3'
+    gem 'debugger',     '1.6.8'
   else
     gem 'ruby-debug',   '0.10.4'
   end
