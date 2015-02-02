@@ -14,7 +14,7 @@ gem 'fiber'
 
 ONE_NINE = RUBY_VERSION >= "1.9."
 
-gem 'mustache'        '0.99.8'
+gem 'mustache',       '0.99.8'
 gem 'rails',          '2.3.17'
 gem 'authlogic',      '2.1.3'
 #gem 'aws-s3',         '0.6.2',  :require => 'aws/s3'
