@@ -15,6 +15,7 @@ gem 'fiber'
 
 ONE_NINE = RUBY_VERSION >= "1.9."
 
+gem 'maildir',        '2.1.0'
 gem 'mustache',       '0.99.8'
 gem 'rails',          '2.3.17'
 gem 'authlogic',      '2.1.3'
