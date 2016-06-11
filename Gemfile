@@ -1,5 +1,17 @@
 source 'https://rubygems.org/'
 
+# gem fixes
+gem 'debugger-ruby_core_source', '~> 1.3', '>= 1.3.8'
+gem 'debugger', '~> 1.5'
+gem 'mustache', '~> 0.99.8'
+gem 'formatador', '= 0.2.5'
+gem 'listen', '= 2.8.0'
+gem 'lumberjack', '= 1.0.9'
+gem 'pry', '= 0.10.1'
+gem 'thor', '= 0.19.1'
+
+
+
 if RUBY_VERSION < "1.9.3" || RUBY_VERSION >= "2.0"
   raise "Canvas requires Ruby 1.9.3"
 end
@@ -139,12 +151,6 @@ group :development do
   gem 'rb-fsevent', :require => false
   gem 'rb-fchange', :require => false
 
-  # Option to DISABLE_RUBY_DEBUGGING is helpful IDE-based debugging.
-  # The ruby debug gems conflict with the IDE-based debugger gem.
-  # Set this option in your dev environment to disable.
-  unless ENV['DISABLE_RUBY_DEBUGGING']
-    gem 'debugger',     '1.5.0'
-  end
 end
 
 group :development, :test do
