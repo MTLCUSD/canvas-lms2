@@ -377,19 +377,9 @@ class GradebooksController < ApplicationController
   end
 
   def redirect_to_appropriate_gradebook_version
-  #Empowered: adjusting redirect for gradebook switch
-    #redirect_to gradebook_url_for(@current_user, @context)
-    # if !Empowered_config[:old_grade_book_enabled]
-    #   @current_user.preferences[:use_gradebook2] = true
-    #   @current_user.save!
-    #   redirect_to named_context_url(@context, "context_gradebook2_url")
-    # else
-      @current_user.preferences[:use_gradebook2] = true
-      @current_user.save!
-      redirect_to gradebook_url_for(@current_user, @context)
-    # end
-  #Empowered end
+    redirect_to gradebook_url_for(@current_user, @context)
   end
+
   protected :redirect_to_appropriate_gradebook_version
 
   def groups_as_assignments(groups=nil, options = {})
